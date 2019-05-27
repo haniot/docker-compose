@@ -1,0 +1,285 @@
+version: "3.7"
+services:
+  redis-ag: # API Gateway database
+    image: redis
+    container_name: haniot-redis
+    restart: always
+    command: ["redis-server", "/etc/redis.conf"]
+    volumes:
+      - redis-gtw-data:/data
+      - ${PWD}/config/redisdb/redis.conf:/etc/redis.conf
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+
+  mongo-account: # Account service databases
+    image: mongo
+    container_name: haniot-mongo-account
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_ADMIN_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_ADMIN_PASS}
+      - MONGO_APPLICATION_DATABASE=account-service
+      - MONGO_APPLICATION_USER=${ACCOUNT_DB_USER}
+      - MONGO_APPLICATION_PASS=${ACCOUNT_DB_PASS}
+    command: ["mongod", "--config", "/etc/mongod.conf"]
+    volumes:
+      - mongo-account-data:/data/db
+      - ${PWD}/${MONGO_PEM_KEY_PATH}:/etc/ssl/mongodb.pem
+      - ${PWD}/config/mongodb/mongod.conf:/etc/mongod.conf
+      - ${PWD}/config/mongodb/mongodb-entrypoint.sh:/docker-entrypoint-initdb.d/mongodb-entrypoint.sh
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+
+  mongo-mhealth: # MHealth service databases
+    image: mongo
+    container_name: haniot-mongo-mhealth
+    restart: always
+    ports:
+      - 27017:27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_ADMIN_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_ADMIN_PASS}
+      - MONGO_APPLICATION_DATABASE=mhealth-service
+      - MONGO_APPLICATION_USER=${MHEALTH_DB_USER}
+      - MONGO_APPLICATION_PASS=${MHEALTH_DB_PASS}
+    command: ["mongod", "--config", "/etc/mongod.conf"]
+    volumes:
+      - mongo-mhealth-data:/data/db
+      - ${PWD}/${MONGO_PEM_KEY_PATH}:/etc/ssl/mongodb.pem
+      - ${PWD}/config/mongodb/mongod.conf:/etc/mongod.conf
+      - ${PWD}/config/mongodb/mongodb-entrypoint.sh:/docker-entrypoint-initdb.d/mongodb-entrypoint.sh
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+
+  mongo-ehr: # EHR service databases
+    image: mongo
+    container_name: haniot-mongo-ehr
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_ADMIN_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_ADMIN_PASS}
+      - MONGO_APPLICATION_DATABASE=ehr-service
+      - MONGO_APPLICATION_USER=${EHR_DB_USER}
+      - MONGO_APPLICATION_PASS=${EHR_DB_PASS}
+    command: ["mongod", "--config", "/etc/mongod.conf"]
+    volumes:
+      - mongo-ehr-data:/data/db
+      - ${PWD}/${MONGO_PEM_KEY_PATH}:/etc/ssl/mongodb.pem
+      - ${PWD}/config/mongodb/mongod.conf:/etc/mongod.conf
+      - ${PWD}/config/mongodb/mongodb-entrypoint.sh:/docker-entrypoint-initdb.d/mongodb-entrypoint.sh
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+
+  mongo-analytics: # Analytics service databases
+    image: mongo
+    container_name: haniot-mongo-analytics
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_ADMIN_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_ADMIN_PASS}
+      - MONGO_APPLICATION_DATABASE=analytics-service
+      - MONGO_APPLICATION_USER=${ANALYTICS_DB_USER}
+      - MONGO_APPLICATION_PASS=${ANALYTICS_DB_PASS}
+    command: ["mongod", "--config", "/etc/mongod.conf"]
+    ports:
+      - 27018:27017
+    volumes:
+      - mongo-analytics-data:/data/db
+      - ${PWD}/${MONGO_PEM_KEY_PATH}:/etc/ssl/mongodb.pem
+      - ${PWD}/config/mongodb/mongod.conf:/etc/mongod.conf
+      - ${PWD}/config/mongodb/mongodb-entrypoint.sh:/docker-entrypoint-initdb.d/mongodb-entrypoint.sh
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+
+  api-gateway: # Container for HANIoT API Gateway
+    build: ./haniot-apigw
+    container_name: haniot-api-gateway
+    restart: always
+    ports:
+      - ${AG_PORT_HTTP:-8080}:${AG_PORT_HTTP:-8080}  # HTTP port, visible externally to the host
+      - ${AG_PORT_HTTPS:-8081}:${AG_PORT_HTTPS:-8081}  # HTTPS port, visible externally to the host
+    depends_on:
+      - redis-ag
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT_HTTP=${AG_PORT_HTTP:-8080}
+      - PORT_HTTPS=${AG_PORT_HTTPS:-8081}
+      - SSL_KEY_PATH=/etc/ssl/server.key
+      - SSL_CERT_PATH=/etc/ssl/server.cert
+      - ISSUER=${ISSUER}
+      - JWT_SECRET=${JWT_SECRET}
+      - API_GATEWAY_SERVICE=http://api-gateway:${AG_PORT_HTTP} # TODO Change to HTTPS when configured for SSL
+      - ACCOUNT_SERVICE=http://account-service:3000 # TODO Change to HTTPS when configured for SSL
+      - MHEALTH_SERVICE=http://mhealth-service:4000 # TODO Change to HTTPS when configured for SSL
+      - EHR_SERVICE=http://ehr-service:5000 # TODO Change to HTTPS when configured for SSL
+      - ANALYTICS_SERVICE=http://analytics-service:6000 # TODO Change to HTTPS when configured for SSL
+      - EMULATE_REDIS=false
+      - PORT_REDIS=6379
+      - HOST_REDIS=redis-ag
+    volumes:
+      - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
+      - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+
+  dashboard-app: # Container for HANIoT dashboard app
+    build: ./haniot-dashboard
+    container_name: haniot-dashboard-app
+    restart: always
+    depends_on:
+      - api-gateway
+    ports:
+      - ${DASHBOARD_PORT_HTTP:-80}:${DASHBOARD_PORT_HTTP:-80}
+      - ${DASHBOARD_PORT_HTTPS:-443}:${DASHBOARD_PORT_HTTPS:-443}
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT_HTTP=${DASHBOARD_PORT_HTTP:-80}
+      - PORT_HTTPS=${DASHBOARD_PORT_HTTPS:-443}
+      - API_GATEWAY_SERVICE=${HANIOT_API_ADDRESS}
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+
+  account-service: # Container for HANIoT Account Service
+    build: ./haniot-account-service
+    container_name: haniot-account-service
+    restart: always
+    depends_on:
+      - mongo-account
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT_HTTP=3000
+      - PORT_HTTPS=3001
+      - SSL_KEY_PATH=/etc/ssl/server.key
+      - SSL_CERT_PATH=/etc/ssl/server.cert
+      - MONGODB_URI=mongodb://${ACCOUNT_DB_USER}:${ACCOUNT_DB_PASS}@mongo-account:27017/account-service?ssl=true
+      - MONGODB_URI_TEST=mongodb://${ACCOUNT_DB_USER}:${ACCOUNT_DB_PASS}@mongo-account:27017/account-service-test?ssl=true
+      - ISSUER=${ISSUER:-haniot}
+      - JWT_SECRET=${JWT_SECRET:-7w!z%C*F-JaNdRgUkXp2s5v8y/A?D(G+}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@haniot.com}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+    volumes:
+      - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
+      - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+
+  mhealth-service: # Container for HANIoT MHealth Service
+    build: ./haniot-mhealth-service
+    container_name: haniot-mhealth-service
+    restart: always
+    depends_on:
+      - mongo-mhealth
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT_HTTP=4000
+      - PORT_HTTPS=4001
+      - SSL_KEY_PATH=/etc/ssl/server.key
+      - SSL_CERT_PATH=/etc/ssl/server.cert
+      - MONGODB_URI=mongodb://${MHEALTH_DB_USER}:${MHEALTH_DB_PASS}@mongo-mhealth:27017/mhealth-service?ssl=true
+      - MONGODB_URI_TEST=mongodb://${MHEALTH_DB_USER}:${MHEALTH_DB_PASS}@mongo-mhealth:27017/mhealth-service-test?ssl=true
+    volumes:
+      - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
+      - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+
+  ehr-service: # Container for HANIoT EHR Service
+    build: ./haniot-ehr-service
+    container_name: haniot-ehr-service
+    restart: always
+    depends_on:
+      - mongo-ehr
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT_HTTP=5000
+      - PORT_HTTPS=5001
+      - SSL_KEY_PATH=/etc/ssl/server.key
+      - SSL_CERT_PATH=/etc/ssl/server.cert
+      - MONGODB_URI=mongodb://${EHR_DB_USER}:${EHR_DB_PASS}@mongo-ehr:27017/ehr-service?ssl=true
+      - MONGODB_URI_TEST=mongodb://${EHR_DB_USER}:${EHR_DB_PASS}@mongo-ehr:27017/ehr-service-test?ssl=true
+    volumes:
+      - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
+      - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+
+  analytics-service: # Container for HANIoT Analytics Service
+    build: ./haniot-analytics-service
+    container_name: haniot-analytics-service
+    restart: always
+    depends_on:
+      - mongo-analytics
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT_HTTP=6000
+      - PORT_HTTPS=6001
+      - SSL_KEY_PATH=/etc/ssl/server.key
+      - SSL_CERT_PATH=/etc/ssl/server.cert
+      - MONGODB_URI=mongodb://${ANALYTICS_DB_USER}:${ANALYTICS_DB_PASS}@mongo-analytics:27017/analytics-service?ssl=true
+      - MONGODB_URI_TEST=mongodb://${ANALYTICS_DB_USER}:${ANALYTICS_DB_PASS}@mongo-analytics:27017/analytics-service-test?ssl=true
+    volumes:
+      - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
+      - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+
+volumes:
+  mongo-account-data:
+    name: mongo-account-data
+  mongo-mhealth-data:
+    name: mongo-mhealth-data
+  mongo-ehr-data:
+    name: mongo-ehr-data
+  mongo-analytics-data:
+    name: mongo-analytics-data
+  redis-gtw-data:
+    name: redis-gateway-data
+
+networks:
+  haniot-network:
+    name: haniot-network
+    driver: bridge
