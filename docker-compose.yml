@@ -42,8 +42,6 @@ services:
     image: mongo
     container_name: haniot-mongo-mhealth
     restart: always
-    ports:
-      - 27017:27017
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${MONGODB_ADMIN_USER}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_ADMIN_PASS}
@@ -97,8 +95,6 @@ services:
       - MONGO_APPLICATION_USER=${ANALYTICS_DB_USER}
       - MONGO_APPLICATION_PASS=${ANALYTICS_DB_PASS}
     command: ["mongod", "--config", "/etc/mongod.conf"]
-    ports:
-      - 27018:27017
     volumes:
       - mongo-analytics-data:/data/db
       - ${PWD}/${MONGO_PEM_KEY_PATH}:/etc/ssl/mongodb.pem
@@ -128,11 +124,11 @@ services:
       - SSL_CERT_PATH=/etc/ssl/server.cert
       - ISSUER=${ISSUER}
       - JWT_SECRET=${JWT_SECRET}
-      - API_GATEWAY_SERVICE=http://api-gateway:${AG_PORT_HTTP} # TODO Change to HTTPS when configured for SSL
-      - ACCOUNT_SERVICE=http://account-service:3000 # TODO Change to HTTPS when configured for SSL
-      - MHEALTH_SERVICE=http://mhealth-service:4000 # TODO Change to HTTPS when configured for SSL
-      - EHR_SERVICE=http://ehr-service:5000 # TODO Change to HTTPS when configured for SSL
-      - ANALYTICS_SERVICE=http://analytics-service:6000 # TODO Change to HTTPS when configured for SSL
+      - API_GATEWAY_SERVICE=http://api-gateway:${AG_PORT_HTTP}
+      - ACCOUNT_SERVICE=http://account-service:3000
+      - MHEALTH_SERVICE=http://mhealth-service:4000
+      - EHR_SERVICE=http://ehr-service:5000
+      - ANALYTICS_SERVICE=http://analytics-service:6000
       - EMULATE_REDIS=false
       - PORT_REDIS=6379
       - HOST_REDIS=redis-ag
@@ -176,18 +172,12 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=3000
-      - PORT_HTTPS=3001
-      - SSL_KEY_PATH=/etc/ssl/server.key
-      - SSL_CERT_PATH=/etc/ssl/server.cert
       - MONGODB_URI=mongodb://${ACCOUNT_DB_USER}:${ACCOUNT_DB_PASS}@mongo-account:27017/account-service?ssl=true
       - MONGODB_URI_TEST=mongodb://${ACCOUNT_DB_USER}:${ACCOUNT_DB_PASS}@mongo-account:27017/account-service-test?ssl=true
       - ISSUER=${ISSUER:-haniot}
       - JWT_SECRET=${JWT_SECRET:-7w!z%C*F-JaNdRgUkXp2s5v8y/A?D(G+}
       - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@haniot.com}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
-    volumes:
-      - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
-      - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
     networks:
       - haniot-network
     logging:
@@ -204,14 +194,8 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=4000
-      - PORT_HTTPS=4001
-      - SSL_KEY_PATH=/etc/ssl/server.key
-      - SSL_CERT_PATH=/etc/ssl/server.cert
       - MONGODB_URI=mongodb://${MHEALTH_DB_USER}:${MHEALTH_DB_PASS}@mongo-mhealth:27017/mhealth-service?ssl=true
       - MONGODB_URI_TEST=mongodb://${MHEALTH_DB_USER}:${MHEALTH_DB_PASS}@mongo-mhealth:27017/mhealth-service-test?ssl=true
-    volumes:
-      - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
-      - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
     networks:
       - haniot-network
     logging:
@@ -228,14 +212,8 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=5000
-      - PORT_HTTPS=5001
-      - SSL_KEY_PATH=/etc/ssl/server.key
-      - SSL_CERT_PATH=/etc/ssl/server.cert
       - MONGODB_URI=mongodb://${EHR_DB_USER}:${EHR_DB_PASS}@mongo-ehr:27017/ehr-service?ssl=true
       - MONGODB_URI_TEST=mongodb://${EHR_DB_USER}:${EHR_DB_PASS}@mongo-ehr:27017/ehr-service-test?ssl=true
-    volumes:
-      - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
-      - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
     networks:
       - haniot-network
     logging:
@@ -252,14 +230,8 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=6000
-      - PORT_HTTPS=6001
-      - SSL_KEY_PATH=/etc/ssl/server.key
-      - SSL_CERT_PATH=/etc/ssl/server.cert
       - MONGODB_URI=mongodb://${ANALYTICS_DB_USER}:${ANALYTICS_DB_PASS}@mongo-analytics:27017/analytics-service?ssl=true
       - MONGODB_URI_TEST=mongodb://${ANALYTICS_DB_USER}:${ANALYTICS_DB_PASS}@mongo-analytics:27017/analytics-service-test?ssl=true
-    volumes:
-      - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
-      - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
     networks:
       - haniot-network
     logging:

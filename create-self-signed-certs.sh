@@ -6,10 +6,6 @@ DIR="$(pwd)/.certs"
 rm -rf "${DIR}"
 mkdir -p "${DIR}"
 
-# Create JWT certs
-ssh-keygen -t rsa -P "" -b 4096 -m PEM -f "${DIR}/jwt.key"
-ssh-keygen -e -m PEM -f "${DIR}/jwt.key" > "${DIR}/jwt.key.pub"
-
 # Create the openssl configuration file. This is used for both generating
 # the certificate as well as for specifying the extensions. It aims in favor
 # of automation, so the DN is encoding and not prompted.
@@ -29,11 +25,11 @@ req_extensions = v3_req
 
 # Be sure to update the subject to match your organization.
 [req_distinguished_name]
-C  = UE
-ST = Bruxelas
-L  = OCARIoT
-O  = OCARIoT
-CN = ocariot.com
+C  = BR
+ST = PB
+L  = HANIoT
+O  = HANIoT
+CN = haniot.nutes.uepb.edu.br
 
 # Allow client and server auth. You may want to only allow server auth.
 # Link to SAN names.
@@ -65,7 +61,7 @@ openssl req \
   -days 120 \
   -nodes \
   -x509 \
-  -subj "/C=UE/ST=Bruxelas/L=OCARIoT/O=OCARIoT CA" \
+  -subj "/C=BR/ST=PB/L=HANIoT/O=HANIoT CA" \
   -keyout "${DIR}/ca.key" \
   -out "${DIR}/ca.crt"
 #
