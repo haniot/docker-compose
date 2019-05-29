@@ -155,7 +155,12 @@ services:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=${DASHBOARD_PORT_HTTP:-80}
       - PORT_HTTPS=${DASHBOARD_PORT_HTTPS:-443}
+      - SSL_KEY_PATH=/etc/ssl/server.key
+      - SSL_CERT_PATH=/etc/ssl/server.cert
       - API_GATEWAY_SERVICE=${HANIOT_API_ADDRESS}
+    volumes:
+      - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
+      - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
     networks:
       - haniot-network
     logging:

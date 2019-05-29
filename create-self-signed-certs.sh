@@ -97,7 +97,7 @@ openssl x509 \
 openssl x509 -in "${DIR}/server.crt" -noout -text
 
 # (Optional) Remove unused files at the moment
-rm -rf "${DIR}/ca.key" "${DIR}/ca.srl" "${DIR}/server.csr" "${DIR}/openssl.cnf"
+rm -rf "${DIR}/ca.key" "${DIR}/ca.srl" ".srl" "${DIR}/server.csr" "${DIR}/openssl.cnf"
 
 # Create MongoDB .pem file that contains the TLS/SSL certificate and key.
 cat "${DIR}/server.crt" "${DIR}/server.key" > "${DIR}/mongodb.pem"
