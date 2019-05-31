@@ -230,6 +230,9 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=6000
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_BUCKET_NAME=haniot-store
       - MONGODB_URI=mongodb://${ANALYTICS_DB_USER}:${ANALYTICS_DB_PASS}@mongo-analytics:27017/analytics-service?ssl=true
       - MONGODB_URI_TEST=mongodb://${ANALYTICS_DB_USER}:${ANALYTICS_DB_PASS}@mongo-analytics:27017/analytics-service-test?ssl=true
     networks:

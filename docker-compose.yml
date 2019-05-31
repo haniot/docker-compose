@@ -108,7 +108,7 @@ services:
         max-size: 100m
 
   api-gateway: # Container for HANIoT API Gateway
-    image: haniot/api-gateway
+    image: haniot/haniot-apigw
     container_name: haniot-api-gateway
     restart: always
     ports:
@@ -155,12 +155,7 @@ services:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=${DASHBOARD_PORT_HTTP:-80}
       - PORT_HTTPS=${DASHBOARD_PORT_HTTPS:-443}
-      - SSL_KEY_PATH=/etc/ssl/server.key
-      - SSL_CERT_PATH=/etc/ssl/server.cert
       - API_GATEWAY_SERVICE=${HANIOT_API_ADDRESS}
-    volumes:
-      - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
-      - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
     networks:
       - haniot-network
     logging:
@@ -169,7 +164,7 @@ services:
         max-size: 100m
 
   account-service: # Container for HANIoT Account Service
-    image: haniot/account-service
+    build: ./haniot-account-service
     container_name: haniot-account-service
     restart: always
     depends_on:
@@ -235,6 +230,9 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=6000
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_BUCKET_NAME=haniot-store
       - MONGODB_URI=mongodb://${ANALYTICS_DB_USER}:${ANALYTICS_DB_PASS}@mongo-analytics:27017/analytics-service?ssl=true
       - MONGODB_URI_TEST=mongodb://${ANALYTICS_DB_USER}:${ANALYTICS_DB_PASS}@mongo-analytics:27017/analytics-service-test?ssl=true
     networks:
