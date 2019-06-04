@@ -107,8 +107,31 @@ services:
       options:
         max-size: 100m
 
+  mongo-notification: # Notification service databases
+    image: mongo
+    container_name: haniot-mongo-notification
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_ADMIN_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_ADMIN_PASS}
+      - MONGO_APPLICATION_DATABASE=notification-service
+      - MONGO_APPLICATION_USER=${NOTIFICATION_DB_USER}
+      - MONGO_APPLICATION_PASS=${NOTIFICATION_DB_PASS}
+    command: ["mongod", "--config", "/etc/mongod.conf"]
+    volumes:
+      - mongo-notification-data:/data/db
+      - ${PWD}/${MONGO_PEM_KEY_PATH}:/etc/ssl/mongodb.pem
+      - ${PWD}/config/mongodb/mongod.conf:/etc/mongod.conf
+      - ${PWD}/config/mongodb/mongodb-entrypoint.sh:/docker-entrypoint-initdb.d/mongodb-entrypoint.sh
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+
   api-gateway: # Container for HANIoT API Gateway
-    image: haniot/haniot-apigw
+    image: haniot/api-gateway
     container_name: haniot-api-gateway
     restart: always
     ports:
@@ -155,7 +178,12 @@ services:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=${DASHBOARD_PORT_HTTP:-80}
       - PORT_HTTPS=${DASHBOARD_PORT_HTTPS:-443}
+      - SSL_KEY_PATH=/etc/ssl/server.key
+      - SSL_CERT_PATH=/etc/ssl/server.cert
       - API_GATEWAY_SERVICE=${HANIOT_API_ADDRESS}
+    volumes:
+      - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
+      - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
     networks:
       - haniot-network
     logging:
@@ -164,7 +192,7 @@ services:
         max-size: 100m
 
   account-service: # Container for HANIoT Account Service
-    build: ./haniot-account-service
+    image: haniot/account-service
     container_name: haniot-account-service
     restart: always
     depends_on:
@@ -172,12 +200,18 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=3000
+      - PORT_HTTPS=3001
+      - SSL_KEY_PATH=/etc/ssl/server.key
+      - SSL_CERT_PATH=/etc/ssl/server.cert
       - MONGODB_URI=mongodb://${ACCOUNT_DB_USER}:${ACCOUNT_DB_PASS}@mongo-account:27017/account-service?ssl=true
       - MONGODB_URI_TEST=mongodb://${ACCOUNT_DB_USER}:${ACCOUNT_DB_PASS}@mongo-account:27017/account-service-test?ssl=true
       - ISSUER=${ISSUER:-haniot}
       - JWT_SECRET=${JWT_SECRET:-7w!z%C*F-JaNdRgUkXp2s5v8y/A?D(G+}
       - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@haniot.com}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+    volumes:
+      - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
+      - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
     networks:
       - haniot-network
     logging:
@@ -194,8 +228,14 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=4000
+      - PORT_HTTPS=4001
+      - SSL_KEY_PATH=/etc/ssl/server.key
+      - SSL_CERT_PATH=/etc/ssl/server.cert
       - MONGODB_URI=mongodb://${MHEALTH_DB_USER}:${MHEALTH_DB_PASS}@mongo-mhealth:27017/mhealth-service?ssl=true
       - MONGODB_URI_TEST=mongodb://${MHEALTH_DB_USER}:${MHEALTH_DB_PASS}@mongo-mhealth:27017/mhealth-service-test?ssl=true
+    volumes:
+      - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
+      - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
     networks:
       - haniot-network
     logging:
@@ -212,8 +252,14 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=5000
+      - PORT_HTTPS=5001
+      - SSL_KEY_PATH=/etc/ssl/server.key
+      - SSL_CERT_PATH=/etc/ssl/server.cert
       - MONGODB_URI=mongodb://${EHR_DB_USER}:${EHR_DB_PASS}@mongo-ehr:27017/ehr-service?ssl=true
       - MONGODB_URI_TEST=mongodb://${EHR_DB_USER}:${EHR_DB_PASS}@mongo-ehr:27017/ehr-service-test?ssl=true
+    volumes:
+      - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
+      - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
     networks:
       - haniot-network
     logging:
@@ -230,11 +276,45 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=6000
+      - PORT_HTTPS=6001
+      - SSL_KEY_PATH=/etc/ssl/server.key
+      - SSL_CERT_PATH=/etc/ssl/server.cert
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - AWS_BUCKET_NAME=haniot-store
       - MONGODB_URI=mongodb://${ANALYTICS_DB_USER}:${ANALYTICS_DB_PASS}@mongo-analytics:27017/analytics-service?ssl=true
       - MONGODB_URI_TEST=mongodb://${ANALYTICS_DB_USER}:${ANALYTICS_DB_PASS}@mongo-analytics:27017/analytics-service-test?ssl=true
+    volumes:
+      - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
+      - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+
+  notification-service: # Container for HANIoT Notification Service
+    image: haniot/notification-service
+    container_name: haniot-notification-service
+    restart: always
+    depends_on:
+      - mongo-notification
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT_HTTP=7000
+      - PORT_HTTPS=7001
+      - SSL_KEY_PATH=/etc/ssl/server.key
+      - SSL_CERT_PATH=/etc/ssl/server.cert
+      - SMTP_HOST:${SMTP_HOST}
+      - SMTP_PORT:${SMTP_PORT}
+      - SMTP_EMAIL:${SMTP_EMAIL}
+      - SMTP_PASSWORD:${SMTP_PASSWORD}
+      - MONGODB_URI=mongodb://${NOTIFICATION_DB_USER}:${NOTIFICATION_DB_PASS}@mongo-notification:27017/notification-service?ssl=true
+      - MONGODB_URI_TEST=mongodb://${NOTIFICATION_DB_USER}:${NOTIFICATION_DB_PASS}@mongo-notification:27017/notification-service-test?ssl=true
+    volumes:
+      - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
+      - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
     networks:
       - haniot-network
     logging:
@@ -243,6 +323,8 @@ services:
         max-size: 100m
 
 volumes:
+  redis-gtw-data:
+    name: redis-gateway-data
   mongo-account-data:
     name: mongo-account-data
   mongo-mhealth-data:
@@ -251,8 +333,8 @@ volumes:
     name: mongo-ehr-data
   mongo-analytics-data:
     name: mongo-analytics-data
-  redis-gtw-data:
-    name: redis-gateway-data
+  mongo-notification-data:
+    name: mongo-notification-data
 
 networks:
   haniot-network:
