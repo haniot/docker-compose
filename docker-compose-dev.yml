@@ -147,14 +147,16 @@ services:
       - SSL_CERT_PATH=/etc/ssl/server.cert
       - ISSUER=${ISSUER}
       - JWT_SECRET=${JWT_SECRET}
-      - API_GATEWAY_SERVICE=http://api-gateway:${AG_PORT_HTTP}
-      - ACCOUNT_SERVICE=http://account-service:3000
-      - MHEALTH_SERVICE=http://mhealth-service:4000
-      - EHR_SERVICE=http://ehr-service:5000
-      - ANALYTICS_SERVICE=http://analytics-service:6000
+      - API_GATEWAY_SERVICE=https://api-gateway:${AG_PORT_HTTPS}
+      - ACCOUNT_SERVICE=https://account-service:3001
+      - MHEALTH_SERVICE=https://mhealth-service:4001
+      - EHR_SERVICE=https://ehr-service:5001
+      - ANALYTICS_SERVICE=https://analytics-service:6001
+      - NOTIFICATION_SERVICE=https://notification-service:7001
       - EMULATE_REDIS=false
       - PORT_REDIS=6379
       - HOST_REDIS=redis-ag
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
     volumes:
       - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
       - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
@@ -209,6 +211,7 @@ services:
       - JWT_SECRET=${JWT_SECRET:-7w!z%C*F-JaNdRgUkXp2s5v8y/A?D(G+}
       - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@haniot.com}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
     volumes:
       - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
       - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
@@ -233,6 +236,7 @@ services:
       - SSL_CERT_PATH=/etc/ssl/server.cert
       - MONGODB_URI=mongodb://${MHEALTH_DB_USER}:${MHEALTH_DB_PASS}@mongo-mhealth:27017/mhealth-service?ssl=true
       - MONGODB_URI_TEST=mongodb://${MHEALTH_DB_USER}:${MHEALTH_DB_PASS}@mongo-mhealth:27017/mhealth-service-test?ssl=true
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
     volumes:
       - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
       - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
@@ -257,6 +261,7 @@ services:
       - SSL_CERT_PATH=/etc/ssl/server.cert
       - MONGODB_URI=mongodb://${EHR_DB_USER}:${EHR_DB_PASS}@mongo-ehr:27017/ehr-service?ssl=true
       - MONGODB_URI_TEST=mongodb://${EHR_DB_USER}:${EHR_DB_PASS}@mongo-ehr:27017/ehr-service-test?ssl=true
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
     volumes:
       - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
       - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
@@ -281,9 +286,10 @@ services:
       - SSL_CERT_PATH=/etc/ssl/server.cert
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - AWS_BUCKET_NAME=haniot-store
+      - AWS_BUCKET_NAME=analytics-service-store
       - MONGODB_URI=mongodb://${ANALYTICS_DB_USER}:${ANALYTICS_DB_PASS}@mongo-analytics:27017/analytics-service?ssl=true
       - MONGODB_URI_TEST=mongodb://${ANALYTICS_DB_USER}:${ANALYTICS_DB_PASS}@mongo-analytics:27017/analytics-service-test?ssl=true
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
     volumes:
       - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
       - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
@@ -312,6 +318,7 @@ services:
       - SMTP_PASSWORD:${SMTP_PASSWORD}
       - MONGODB_URI=mongodb://${NOTIFICATION_DB_USER}:${NOTIFICATION_DB_PASS}@mongo-notification:27017/notification-service?ssl=true
       - MONGODB_URI_TEST=mongodb://${NOTIFICATION_DB_USER}:${NOTIFICATION_DB_PASS}@mongo-notification:27017/notification-service-test?ssl=true
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
     volumes:
       - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
       - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
