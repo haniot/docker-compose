@@ -156,7 +156,6 @@ services:
       - EMULATE_REDIS=false
       - PORT_REDIS=6379
       - HOST_REDIS=redis-ag
-      - NODE_TLS_REJECT_UNAUTHORIZED=0
     volumes:
       - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
       - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
@@ -211,7 +210,6 @@ services:
       - JWT_SECRET=${JWT_SECRET:-7w!z%C*F-JaNdRgUkXp2s5v8y/A?D(G+}
       - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@haniot.com}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
-      - NODE_TLS_REJECT_UNAUTHORIZED=0
     volumes:
       - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
       - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
@@ -236,7 +234,6 @@ services:
       - SSL_CERT_PATH=/etc/ssl/server.cert
       - MONGODB_URI=mongodb://${MHEALTH_DB_USER}:${MHEALTH_DB_PASS}@mongo-mhealth:27017/mhealth-service?ssl=true
       - MONGODB_URI_TEST=mongodb://${MHEALTH_DB_USER}:${MHEALTH_DB_PASS}@mongo-mhealth:27017/mhealth-service-test?ssl=true
-      - NODE_TLS_REJECT_UNAUTHORIZED=0
     volumes:
       - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
       - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
@@ -261,7 +258,6 @@ services:
       - SSL_CERT_PATH=/etc/ssl/server.cert
       - MONGODB_URI=mongodb://${EHR_DB_USER}:${EHR_DB_PASS}@mongo-ehr:27017/ehr-service?ssl=true
       - MONGODB_URI_TEST=mongodb://${EHR_DB_USER}:${EHR_DB_PASS}@mongo-ehr:27017/ehr-service-test?ssl=true
-      - NODE_TLS_REJECT_UNAUTHORIZED=0
     volumes:
       - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
       - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
@@ -289,7 +285,6 @@ services:
       - AWS_BUCKET_NAME=analytics-service-store
       - MONGODB_URI=mongodb://${ANALYTICS_DB_USER}:${ANALYTICS_DB_PASS}@mongo-analytics:27017/analytics-service?ssl=true
       - MONGODB_URI_TEST=mongodb://${ANALYTICS_DB_USER}:${ANALYTICS_DB_PASS}@mongo-analytics:27017/analytics-service-test?ssl=true
-      - NODE_TLS_REJECT_UNAUTHORIZED=0
     volumes:
       - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
       - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
@@ -312,13 +307,12 @@ services:
       - PORT_HTTPS=7001
       - SSL_KEY_PATH=/etc/ssl/server.key
       - SSL_CERT_PATH=/etc/ssl/server.cert
-      - SMTP_HOST:${SMTP_HOST}
-      - SMTP_PORT:${SMTP_PORT}
-      - SMTP_EMAIL:${SMTP_EMAIL}
-      - SMTP_PASSWORD:${SMTP_PASSWORD}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_EMAIL=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASS}
       - MONGODB_URI=mongodb://${NOTIFICATION_DB_USER}:${NOTIFICATION_DB_PASS}@mongo-notification:27017/notification-service?ssl=true
       - MONGODB_URI_TEST=mongodb://${NOTIFICATION_DB_USER}:${NOTIFICATION_DB_PASS}@mongo-notification:27017/notification-service-test?ssl=true
-      - NODE_TLS_REJECT_UNAUTHORIZED=0
     volumes:
       - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
       - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
