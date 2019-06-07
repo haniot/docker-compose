@@ -22,7 +22,7 @@
 	path = haniot-ehr-service
 	url = https://github.com/nutes-uepb/haniot-ehr-service.git
 	branch = develop
-	ignore = dirtys
+	ignore = dirty
 [submodule "haniot-analytics-service"]
 	path = haniot-analytics-service
 	url = https://github.com/nutes-uepb/haniot-analytics-service.git
