@@ -1,0 +1,35 @@
+[submodule "haniot-apigw"]
+	path = haniot-apigw
+	url = https://github.com/nutes-uepb/haniot-apigw.git
+	branch = develop
+	ignore = dirty
+[submodule "haniot-dashboard"]
+	path = haniot-dashboard
+	url = https://github.com/nutes-uepb/haniot-dashboard.git
+	branch = develop
+	ignore = dirty
+[submodule "haniot-account-service"]
+	path = haniot-account-service
+	url = https://github.com/nutes-uepb/haniot-account-service.git
+	branch = develop
+	ignore = dirty
+[submodule "haniot-mhealth-service"]
+	path = haniot-mhealth-service
+	url = https://github.com/nutes-uepb/haniot-mhealth-service.git
+	branch = develop
+	ignore = dirty
+[submodule "haniot-ehr-service"]
+	path = haniot-ehr-service
+	url = https://github.com/nutes-uepb/haniot-ehr-service.git
+	branch = develop
+	ignore = dirty
+[submodule "haniot-analytics-service"]
+	path = haniot-analytics-service
+	url = https://github.com/nutes-uepb/haniot-analytics-service.git
+	branch = develop
+	ignore = dirty
+[submodule "haniot-notification-service"]
+	path = haniot-notification-service
+	url = https://github.com/nutes-uepb/haniot-notification-service.git
+	branch = develop
+	ignore = dirty
