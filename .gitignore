@@ -12,9 +12,9 @@ composer.phar
 
 # certificates and keys directories and files
 .certs
+certs
 *.pem
 *.crt
 *.key
 *.csr
-certs
 
