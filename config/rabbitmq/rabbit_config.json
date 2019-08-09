@@ -1,0 +1,126 @@
+{
+  "rabbit_version": "3.7.17",
+  "users": [
+    {
+      "name": "mhealth.app",
+      "password_hash": "8qmA09D/00iGatMvD0GG5CkjLv/i5KtmV3kWfNs4PU7iuqGz",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": "application"
+    },
+    {
+      "name": "analytics.app",
+      "password_hash": "sjfFkwvdqBxxoFR9j2LGcJV5isF8NcZBSzkgd8Tce7lyEAA0",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": "application"
+    },
+    {
+      "name": "notification.app",
+      "password_hash": "ZOncWfbX3k8+s1nhZRsrDP/HgIZXbAXCejneQSuyTgl2JP1R",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": "application"
+    },
+    {
+      "name": "haniot",
+      "password_hash": "RvFUpX+Cz8crrHeoL9E7EXJ8b+O27VA9ur6Q1EQLMkTvDjXZ",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": "administrator"
+    },
+    {
+      "name": "account.app",
+      "password_hash": "OhtW1nz0JfbpvNV+SYydaEdrAvHSyNSqZdUzCswlyo+eaWJW",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": "application"
+    },
+    {
+      "name": "ehr.app",
+      "password_hash": "TzyH7fcBWFOoVyCQ+buRRE/JY2/bnmd3hMwtrGtnjI7AfnGu",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": "application"
+    },
+    {
+      "name": "guest",
+      "password_hash": "XUAFa2QwXO5a0qCAZQaGrUH0WjsfjnYvePOXEv0mDh/wPZSW",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": "administrator"
+    }
+  ],
+  "vhosts": [
+    {
+      "name": "haniot"
+    },
+    {
+      "name": "/"
+    }
+  ],
+  "permissions": [
+    {
+      "user": "account.app",
+      "vhost": "haniot",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "guest",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "analytics.app",
+      "vhost": "haniot",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "ehr.app",
+      "vhost": "haniot",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "haniot",
+      "vhost": "haniot",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "notification.app",
+      "vhost": "haniot",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "mhealth.app",
+      "vhost": "haniot",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "topic_permissions": [
+    {
+      "user": "haniot",
+      "vhost": "haniot",
+      "exchange": "",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "parameters": [],
+  "global_parameters": [
+    {
+      "name": "cluster_name",
+      "value": "rabbit@haniot"
+    }
+  ],
+  "policies": [],
+  "queues": [],
+  "exchanges": [],
+  "bindings": []
+}
