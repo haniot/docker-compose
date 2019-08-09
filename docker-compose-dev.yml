@@ -22,7 +22,7 @@ services:
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${MONGODB_ADMIN_USER}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_ADMIN_PASS}
-      - MONGO_APPLICATION_DATABASE=account-service
+      - MONGO_APPLICATION_DATABASE=account
       - MONGO_APPLICATION_USER=${ACCOUNT_DB_USER}
       - MONGO_APPLICATION_PASS=${ACCOUNT_DB_PASS}
     command: ["mongod", "--config", "/etc/mongod.conf"]
@@ -45,7 +45,7 @@ services:
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${MONGODB_ADMIN_USER}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_ADMIN_PASS}
-      - MONGO_APPLICATION_DATABASE=mhealth-service
+      - MONGO_APPLICATION_DATABASE=mhealth
       - MONGO_APPLICATION_USER=${MHEALTH_DB_USER}
       - MONGO_APPLICATION_PASS=${MHEALTH_DB_PASS}
     command: ["mongod", "--config", "/etc/mongod.conf"]
@@ -68,7 +68,7 @@ services:
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${MONGODB_ADMIN_USER}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_ADMIN_PASS}
-      - MONGO_APPLICATION_DATABASE=ehr-service
+      - MONGO_APPLICATION_DATABASE=ehr
       - MONGO_APPLICATION_USER=${EHR_DB_USER}
       - MONGO_APPLICATION_PASS=${EHR_DB_PASS}
     command: ["mongod", "--config", "/etc/mongod.conf"]
@@ -91,7 +91,7 @@ services:
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${MONGODB_ADMIN_USER}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_ADMIN_PASS}
-      - MONGO_APPLICATION_DATABASE=analytics-service
+      - MONGO_APPLICATION_DATABASE=analytics
       - MONGO_APPLICATION_USER=${ANALYTICS_DB_USER}
       - MONGO_APPLICATION_PASS=${ANALYTICS_DB_PASS}
     command: ["mongod", "--config", "/etc/mongod.conf"]
@@ -114,7 +114,7 @@ services:
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${MONGODB_ADMIN_USER}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_ADMIN_PASS}
-      - MONGO_APPLICATION_DATABASE=notification-service
+      - MONGO_APPLICATION_DATABASE=notification
       - MONGO_APPLICATION_USER=${NOTIFICATION_DB_USER}
       - MONGO_APPLICATION_PASS=${NOTIFICATION_DB_PASS}
     command: ["mongod", "--config", "/etc/mongod.conf"]
@@ -131,7 +131,7 @@ services:
         max-size: 100m
 
   api-gateway: # Container for HANIoT API Gateway
-    build: ./haniot-apigw
+    build: ./api-gateway
     container_name: haniot-api-gateway
     restart: always
     ports:
@@ -145,20 +145,22 @@ services:
       - PORT_HTTPS=${AG_PORT_HTTPS:-8081}
       - SSL_KEY_PATH=/etc/ssl/server.key
       - SSL_CERT_PATH=/etc/ssl/server.cert
+      - JWT_PUBLIC_KEY_PATH=/etc/.certs/jwt.pub
       - ISSUER=${ISSUER}
       - JWT_SECRET=${JWT_SECRET}
       - API_GATEWAY_SERVICE=https://api-gateway:${AG_PORT_HTTPS}
-      - ACCOUNT_SERVICE=https://account-service:3001
-      - MHEALTH_SERVICE=https://mhealth-service:4001
-      - EHR_SERVICE=https://ehr-service:5001
-      - ANALYTICS_SERVICE=https://analytics-service:6001
-      - NOTIFICATION_SERVICE=https://notification-service:7001
+      - ACCOUNT_SERVICE=https://account:3001
+      - MHEALTH_SERVICE=https://mhealth:4001
+      - EHR_SERVICE=https://ehr:5001
+      - ANALYTICS_SERVICE=https://analytics:6001
+      - NOTIFICATION_SERVICE=https://notification:7001
       - EMULATE_REDIS=false
       - PORT_REDIS=6379
       - HOST_REDIS=redis-ag
     volumes:
       - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
       - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
+      - ${JWT_PUBLIC_KEY_PATH}:/etc/.certs/jwt.pub
     networks:
       - haniot-network
     logging:
@@ -167,21 +169,25 @@ services:
         max-size: 100m
 
   dashboard-app: # Container for HANIoT dashboard app
-    build: ./haniot-dashboard
+    build: ./dashboard-app
     container_name: haniot-dashboard-app
     restart: always
     depends_on:
       - api-gateway
     ports:
-      - ${DASHBOARD_PORT_HTTP:-80}:${DASHBOARD_PORT_HTTP:-80}
-      - ${DASHBOARD_PORT_HTTPS:-443}:${DASHBOARD_PORT_HTTPS:-443}
+      - ${DASH_PORT_HTTP:-80}:${DASH_PORT_HTTPS:-80}
+      - ${DASH_PORT_HTTPS:-443}:${DASH_PORT_HTTPS:-443}
     environment:
       - NODE_ENV=${NODE_ENV:-development}
-      - PORT_HTTP=${DASHBOARD_PORT_HTTP:-80}
-      - PORT_HTTPS=${DASHBOARD_PORT_HTTPS:-443}
+      - PORT_HTTP=${DASH_PORT_HTTP:-80}
+      - PORT_HTTPS=${DASH_PORT_HTTPS:-443}
       - SSL_KEY_PATH=/etc/ssl/server.key
       - SSL_CERT_PATH=/etc/ssl/server.cert
-      - API_GATEWAY_SERVICE=${HANIOT_API_ADDRESS}
+      - API_GATEWAY_SERVICE=${AG_URL}:${AG_PORT_HTTPS}
+      - LS_SECRET_KEY=${LS_SECRET_KEY}
+      - RECAPTCHA_KEY=${RECAPTCHA_KEY}
+      - RECAPTCHA_SERVER_KEY=${RECAPTCHA_SERVER_KEY}
+      - RECAPTCHA_URL_VERIFY=https://www.google.com/recaptcha/api/siteverify
     volumes:
       - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
       - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
@@ -192,27 +198,33 @@ services:
       options:
         max-size: 100m
 
-  account-service: # Container for HANIoT Account Service
-    build: ./haniot-account-service
-    container_name: haniot-account-service
+  account: # Container for HANIoT Account Service
+    build: ./account
+    container_name: haniot-account
     restart: always
     depends_on:
       - mongo-account
+      - rabbitmq
     environment:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=3000
       - PORT_HTTPS=3001
+      - HOST_WHITELIST=[api-gateway]
       - SSL_KEY_PATH=/etc/ssl/server.key
       - SSL_CERT_PATH=/etc/ssl/server.cert
-      - MONGODB_URI=mongodb://${ACCOUNT_DB_USER}:${ACCOUNT_DB_PASS}@mongo-account:27017/account-service?ssl=true
-      - MONGODB_URI_TEST=mongodb://${ACCOUNT_DB_USER}:${ACCOUNT_DB_PASS}@mongo-account:27017/account-service-test?ssl=true
+      - JWT_PRIVATE_KEY_PATH=/etc/.certs/jwt.key
+      - JWT_PUBLIC_KEY_PATH=/etc/.certs/jwt.pub
       - ISSUER=${ISSUER:-haniot}
-      - JWT_SECRET=${JWT_SECRET:-7w!z%C*F-JaNdRgUkXp2s5v8y/A?D(G+}
       - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@haniot.com}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      - MONGODB_URI=mongodb://${ACCOUNT_DB_USER}:${ACCOUNT_DB_PASS}@mongo-account:27017/account?ssl=true
+      - RABBITMQ_URI=${ACCOUNT_RABBITMQ_URI}
+      - DASHBOARD_HOST=${DASH_URL}:${DASH_PORT_HTTPS}
     volumes:
       - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
       - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
+      - ${JWT_PRIVATE_KEY_PATH}:/etc/.certs/jwt.key
+      - ${JWT_PUBLIC_KEY_PATH}:/etc/.certs/jwt.pub
     networks:
       - haniot-network
     logging:
@@ -220,20 +232,22 @@ services:
       options:
         max-size: 100m
 
-  mhealth-service: # Container for HANIoT MHealth Service
-    build: ./haniot-mhealth-service
-    container_name: haniot-mhealth-service
+  mhealth: # Container for HANIoT MHealth Service
+    build: ./mhealth
+    container_name: haniot-mhealth
     restart: always
     depends_on:
       - mongo-mhealth
+      - rabbitmq
     environment:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=4000
       - PORT_HTTPS=4001
+      - HOST_WHITELIST=[api-gateway]
       - SSL_KEY_PATH=/etc/ssl/server.key
       - SSL_CERT_PATH=/etc/ssl/server.cert
-      - MONGODB_URI=mongodb://${MHEALTH_DB_USER}:${MHEALTH_DB_PASS}@mongo-mhealth:27017/mhealth-service?ssl=true
-      - MONGODB_URI_TEST=mongodb://${MHEALTH_DB_USER}:${MHEALTH_DB_PASS}@mongo-mhealth:27017/mhealth-service-test?ssl=true
+      - MONGODB_URI=mongodb://${MHEALTH_DB_USER}:${MHEALTH_DB_PASS}@mongo-mhealth:27017/mhealth?ssl=true
+      - RABBITMQ_URI=${MHEALTH_RABBITMQ_URI}
     volumes:
       - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
       - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
@@ -244,20 +258,22 @@ services:
       options:
         max-size: 100m
 
-  ehr-service: # Container for HANIoT EHR Service
-    build: ./haniot-ehr-service
-    container_name: haniot-ehr-service
+  ehr: # Container for HANIoT EHR Service
+    build: ./ehr
+    container_name: haniot-ehr
     restart: always
     depends_on:
       - mongo-ehr
+      - rabbitmq
     environment:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=5000
       - PORT_HTTPS=5001
+      - HOST_WHITELIST=[api-gateway]
       - SSL_KEY_PATH=/etc/ssl/server.key
       - SSL_CERT_PATH=/etc/ssl/server.cert
-      - MONGODB_URI=mongodb://${EHR_DB_USER}:${EHR_DB_PASS}@mongo-ehr:27017/ehr-service?ssl=true
-      - MONGODB_URI_TEST=mongodb://${EHR_DB_USER}:${EHR_DB_PASS}@mongo-ehr:27017/ehr-service-test?ssl=true
+      - MONGODB_URI=mongodb://${EHR_DB_USER}:${EHR_DB_PASS}@mongo-ehr:27017/ehr?ssl=true
+      - RABBITMQ_URI=${EHR_RABBITMQ_URI}
     volumes:
       - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
       - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
@@ -268,12 +284,13 @@ services:
       options:
         max-size: 100m
 
-  analytics-service: # Container for HANIoT Analytics Service
-    build: ./haniot-analytics-service
-    container_name: haniot-analytics-service
+  analytics: # Container for HANIoT Analytics Service
+    build: ./analytics
+    container_name: haniot-analytics
     restart: always
     depends_on:
       - mongo-analytics
+      - rabbitmq
     environment:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=6000
@@ -284,8 +301,9 @@ services:
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - AWS_BUCKET_NAME=${AWS_BUCKET_NAME}
       - AWS_BUCKET_REGION=${AWS_BUCKET_REGION}
-      - MONGODB_URI=mongodb://${ANALYTICS_DB_USER}:${ANALYTICS_DB_PASS}@mongo-analytics:27017/analytics-service?ssl=true
-      - MONGODB_URI_TEST=mongodb://${ANALYTICS_DB_USER}:${ANALYTICS_DB_PASS}@mongo-analytics:27017/analytics-service-test?ssl=true
+      - MONGODB_URI=mongodb://${ANALYTICS_DB_USER}:${ANALYTICS_DB_PASS}@mongo-analytics:27017/analytics?ssl=true
+      - RABBITMQ_URI=${ANALYTICS_RABBITMQ_URI}
+      - HOST_WHITELIST=[api-gateway]
     volumes:
       - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
       - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
@@ -296,27 +314,48 @@ services:
       options:
         max-size: 100m
 
-  notification-service: # Container for HANIoT Notification Service
-    build: ./haniot-notification-service
-    container_name: haniot-notification-service
+  notification: # Container for HANIoT Notification Service
+    build: ./notification
+    container_name: haniot-notification
     restart: always
     depends_on:
       - mongo-notification
+      - rabbitmq
     environment:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=7000
       - PORT_HTTPS=7001
+      - HOST_WHITELIST=[api-gateway]
       - SSL_KEY_PATH=/etc/ssl/server.key
       - SSL_CERT_PATH=/etc/ssl/server.cert
       - SMTP_HOST=${SMTP_HOST}
       - SMTP_PORT=${SMTP_PORT}
-      - SMTP_EMAIL=${SMTP_USER}
-      - SMTP_PASSWORD=${SMTP_PASS}
-      - MONGODB_URI=mongodb://${NOTIFICATION_DB_USER}:${NOTIFICATION_DB_PASS}@mongo-notification:27017/notification-service?ssl=true
-      - MONGODB_URI_TEST=mongodb://${NOTIFICATION_DB_USER}:${NOTIFICATION_DB_PASS}@mongo-notification:27017/notification-service-test?ssl=true
+      - SMTP_EMAIL=${SMTP_EMAIL}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - MONGODB_URI=mongodb://${NOTIFICATION_DB_USER}:${NOTIFICATION_DB_PASS}@mongo-notification:27017/notification?ssl=true
+      - RABBITMQ_URI=${NOTIFICATION_RABBITMQ_URI}
     volumes:
       - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
       - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+
+  rabbitmq: # Container for RabbitMQ
+    image: rabbitmq:3.7.17
+    container_name: haniot-rabbitmq
+    restart: always
+    ports:
+      - ${RABBITMQ_MGMT_PORT:-15672}:15672 # AMQP Management UI
+      - ${RABBITMQ_PORT:-5672}:5672 # AMQP Service
+    volumes:
+      - ./config/rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins
+      - ./config/rabbitmq/rabbit_config.json:/etc/rabbitmq/rabbit_config.json
+    environment:
+      - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbitmq_management load_definitions "/etc/rabbitmq/rabbit_config.json"
     networks:
       - haniot-network
     logging:
