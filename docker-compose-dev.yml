@@ -330,8 +330,8 @@ services:
       - SSL_CERT_PATH=/etc/ssl/server.cert
       - SMTP_HOST=${SMTP_HOST}
       - SMTP_PORT=${SMTP_PORT}
-      - SMTP_EMAIL=${SMTP_EMAIL}
-      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
       - MONGODB_URI=mongodb://${NOTIFICATION_DB_USER}:${NOTIFICATION_DB_PASS}@mongo-notification:27017/notification?ssl=true
       - RABBITMQ_URI=${NOTIFICATION_RABBITMQ_URI}
     volumes:
