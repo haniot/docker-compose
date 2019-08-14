@@ -146,8 +146,7 @@ services:
       - SSL_KEY_PATH=/etc/ssl/server.key
       - SSL_CERT_PATH=/etc/ssl/server.cert
       - JWT_PUBLIC_KEY_PATH=/etc/.certs/jwt.pub
-      - ISSUER=${ISSUER}
-      - JWT_SECRET=${JWT_SECRET}
+      - ISSUER=haniot
       - API_GATEWAY_SERVICE=https://api-gateway:${AG_PORT_HTTPS}
       - ACCOUNT_SERVICE=https://account:3001
       - MHEALTH_SERVICE=https://mhealth:4001
@@ -214,7 +213,7 @@ services:
       - SSL_CERT_PATH=/etc/ssl/server.cert
       - JWT_PRIVATE_KEY_PATH=/etc/.certs/jwt.key
       - JWT_PUBLIC_KEY_PATH=/etc/.certs/jwt.pub
-      - ISSUER=${ISSUER:-haniot}
+      - ISSUER=haniot
       - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@haniot.com}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
       - MONGODB_URI=mongodb://${ACCOUNT_DB_USER}:${ACCOUNT_DB_PASS}@mongo-account:27017/account?ssl=true
