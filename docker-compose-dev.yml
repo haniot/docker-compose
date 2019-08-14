@@ -168,35 +168,35 @@ services:
       options:
         max-size: 100m
 
-  dashboard-app: # Container for HANIoT dashboard app
-    build: ./dashboard-app
-    container_name: haniot-dashboard-app
-    restart: always
-    depends_on:
-      - api-gateway
-    ports:
-      - ${DASH_PORT_HTTP:-80}:${DASH_PORT_HTTPS:-80}
-      - ${DASH_PORT_HTTPS:-443}:${DASH_PORT_HTTPS:-443}
-    environment:
-      - NODE_ENV=${NODE_ENV:-development}
-      - PORT_HTTP=${DASH_PORT_HTTP:-80}
-      - PORT_HTTPS=${DASH_PORT_HTTPS:-443}
-      - SSL_KEY_PATH=/etc/ssl/server.key
-      - SSL_CERT_PATH=/etc/ssl/server.cert
-      - API_GATEWAY_SERVICE=${AG_URL}:${AG_PORT_HTTPS}
-      - LS_SECRET_KEY=${LS_SECRET_KEY}
-      - RECAPTCHA_KEY=${RECAPTCHA_KEY}
-      - RECAPTCHA_SERVER_KEY=${RECAPTCHA_SERVER_KEY}
-      - RECAPTCHA_URL_VERIFY=https://www.google.com/recaptcha/api/siteverify
-    volumes:
-      - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
-      - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
-    networks:
-      - haniot-network
-    logging:
-      driver: json-file
-      options:
-        max-size: 100m
+#  dashboard: # Container for HANIoT dashboard app
+#    build: ./dashboard-app
+#    container_name: haniot-dashboard-app
+#    restart: always
+#    depends_on:
+#      - api-gateway
+#    ports:
+#      - ${DASH_PORT_HTTP:-80}:${DASH_PORT_HTTP:-80}
+#      - ${DASH_PORT_HTTPS:-443}:${DASH_PORT_HTTPS:-443}
+#    environment:
+#      - NODE_ENV=${NODE_ENV:-development}
+#      - PORT_HTTP=${DASH_PORT_HTTP:-80}
+#      - PORT_HTTPS=${DASH_PORT_HTTPS:-443}
+#      - SSL_KEY_PATH=/etc/ssl/server.key
+#      - SSL_CERT_PATH=/etc/ssl/server.cert
+#      - API_GATEWAY_SERVICE=${AG_URL}:${AG_PORT_HTTPS}
+#      - LS_SECRET_KEY=${LS_SECRET_KEY}
+#      - RECAPTCHA_KEY=${RECAPTCHA_KEY}
+#      - RECAPTCHA_SERVER_KEY=${RECAPTCHA_SERVER_KEY}
+#      - RECAPTCHA_URL_VERIFY=https://www.google.com/recaptcha/api/siteverify
+#    volumes:
+#      - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
+#      - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
+#    networks:
+#      - haniot-network
+#    logging:
+#      driver: json-file
+#      options:
+#        max-size: 100m
 
   account: # Container for HANIoT Account Service
     build: ./account
@@ -219,7 +219,7 @@ services:
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
       - MONGODB_URI=mongodb://${ACCOUNT_DB_USER}:${ACCOUNT_DB_PASS}@mongo-account:27017/account?ssl=true
       - RABBITMQ_URI=${ACCOUNT_RABBITMQ_URI}
-      - DASHBOARD_HOST=${DASH_URL}:${DASH_PORT_HTTPS}
+      - DASHBOARD_HOST=${DASH_URL}
     volumes:
       - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
       - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
@@ -304,6 +304,7 @@ services:
       - MONGODB_URI=mongodb://${ANALYTICS_DB_USER}:${ANALYTICS_DB_PASS}@mongo-analytics:27017/analytics?ssl=true
       - RABBITMQ_URI=${ANALYTICS_RABBITMQ_URI}
       - HOST_WHITELIST=[api-gateway]
+      - DASHBOARD_HOST=${DASH_URL}
     volumes:
       - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
       - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert

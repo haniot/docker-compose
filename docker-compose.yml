@@ -168,7 +168,7 @@ services:
       options:
         max-size: 100m
 
-  dashboard-app: # Container for HANIoT dashboard app
+  dashboard: # Container for HANIoT dashboard app
     image: haniot/dashboard
     container_name: haniot-dashboard-app
     restart: always
@@ -219,7 +219,7 @@ services:
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
       - MONGODB_URI=mongodb://${ACCOUNT_DB_USER}:${ACCOUNT_DB_PASS}@mongo-account:27017/account?ssl=true
       - RABBITMQ_URI=${ACCOUNT_RABBITMQ_URI}
-      - DASHBOARD_HOST=${DASH_URL}:${DASH_PORT_HTTPS}
+      - DASHBOARD_HOST=${DASH_URL}
     volumes:
       - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
       - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
@@ -304,6 +304,7 @@ services:
       - MONGODB_URI=mongodb://${ANALYTICS_DB_USER}:${ANALYTICS_DB_PASS}@mongo-analytics:27017/analytics?ssl=true
       - RABBITMQ_URI=${ANALYTICS_RABBITMQ_URI}
       - HOST_WHITELIST=[api-gateway]
+      - DASHBOARD_HOST=${DASH_URL}
     volumes:
       - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
       - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
@@ -330,8 +331,8 @@ services:
       - SSL_CERT_PATH=/etc/ssl/server.cert
       - SMTP_HOST=${SMTP_HOST}
       - SMTP_PORT=${SMTP_PORT}
-      - SMTP_EMAIL=${SMTP_EMAIL}
-      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
       - MONGODB_URI=mongodb://${NOTIFICATION_DB_USER}:${NOTIFICATION_DB_PASS}@mongo-notification:27017/notification?ssl=true
       - RABBITMQ_URI=${NOTIFICATION_RABBITMQ_URI}
     volumes:
