@@ -170,7 +170,7 @@ services:
 
   dashboard: # Container for HANIoT dashboard app
     image: haniot/dashboard
-    container_name: haniot-dashboard-app
+    container_name: haniot-dashboard
     restart: always
     depends_on:
       - api-gateway
