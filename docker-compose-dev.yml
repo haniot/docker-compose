@@ -147,6 +147,7 @@ services:
       - SSL_CERT_PATH=/etc/ssl/server.cert
       - JWT_PUBLIC_KEY_PATH=/etc/.certs/jwt.pub
       - ISSUER=haniot
+      - RECAPTCHA_SERVER_KEY=${RECAPTCHA_SERVER_KEY}
       - API_GATEWAY_SERVICE=https://api-gateway:${AG_PORT_HTTPS}
       - ACCOUNT_SERVICE=https://account:3001
       - MHEALTH_SERVICE=https://mhealth:4001
@@ -185,8 +186,6 @@ services:
       - API_GATEWAY_SERVICE=${AG_URL}:${AG_PORT_HTTPS}
       - LS_SECRET_KEY=${LS_SECRET_KEY}
       - RECAPTCHA_KEY=${RECAPTCHA_KEY}
-      - RECAPTCHA_SERVER_KEY=${RECAPTCHA_SERVER_KEY}
-      - RECAPTCHA_URL_VERIFY=https://www.google.com/recaptcha/api/siteverify
     volumes:
       - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
       - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
