@@ -7,7 +7,7 @@ services:
     command: ["redis-server", "/etc/redis.conf"]
     volumes:
       - redis-gtw-data:/data
-      - ${PWD}/config/redisdb/redis.conf:/etc/redis.conf
+      - ./config/redisdb/redis.conf:/etc/redis.conf
     networks:
       - haniot-network
     logging:
@@ -28,9 +28,9 @@ services:
     command: ["mongod", "--config", "/etc/mongod.conf"]
     volumes:
       - mongo-account-data:/data/db
-      - ${PWD}/${MONGO_PEM_KEY_PATH}:/etc/ssl/mongodb.pem
-      - ${PWD}/config/mongodb/mongod.conf:/etc/mongod.conf
-      - ${PWD}/config/mongodb/mongodb-entrypoint.sh:/docker-entrypoint-initdb.d/mongodb-entrypoint.sh
+      - ${MONGO_PEM_KEY_PATH}:/etc/ssl/mongodb.pem
+      - ./config/mongodb/mongod.conf:/etc/mongod.conf
+      - ./config/mongodb/mongodb-entrypoint.sh:/docker-entrypoint-initdb.d/mongodb-entrypoint.sh
     networks:
       - haniot-network
     logging:
@@ -51,9 +51,9 @@ services:
     command: ["mongod", "--config", "/etc/mongod.conf"]
     volumes:
       - mongo-mhealth-data:/data/db
-      - ${PWD}/${MONGO_PEM_KEY_PATH}:/etc/ssl/mongodb.pem
-      - ${PWD}/config/mongodb/mongod.conf:/etc/mongod.conf
-      - ${PWD}/config/mongodb/mongodb-entrypoint.sh:/docker-entrypoint-initdb.d/mongodb-entrypoint.sh
+      - ${MONGO_PEM_KEY_PATH}:/etc/ssl/mongodb.pem
+      - ./config/mongodb/mongod.conf:/etc/mongod.conf
+      - ./config/mongodb/mongodb-entrypoint.sh:/docker-entrypoint-initdb.d/mongodb-entrypoint.sh
     networks:
       - haniot-network
     logging:
@@ -74,9 +74,9 @@ services:
     command: ["mongod", "--config", "/etc/mongod.conf"]
     volumes:
       - mongo-ehr-data:/data/db
-      - ${PWD}/${MONGO_PEM_KEY_PATH}:/etc/ssl/mongodb.pem
-      - ${PWD}/config/mongodb/mongod.conf:/etc/mongod.conf
-      - ${PWD}/config/mongodb/mongodb-entrypoint.sh:/docker-entrypoint-initdb.d/mongodb-entrypoint.sh
+      - ${MONGO_PEM_KEY_PATH}:/etc/ssl/mongodb.pem
+      - ./config/mongodb/mongod.conf:/etc/mongod.conf
+      - ./config/mongodb/mongodb-entrypoint.sh:/docker-entrypoint-initdb.d/mongodb-entrypoint.sh
     networks:
       - haniot-network
     logging:
@@ -97,9 +97,9 @@ services:
     command: ["mongod", "--config", "/etc/mongod.conf"]
     volumes:
       - mongo-analytics-data:/data/db
-      - ${PWD}/${MONGO_PEM_KEY_PATH}:/etc/ssl/mongodb.pem
-      - ${PWD}/config/mongodb/mongod.conf:/etc/mongod.conf
-      - ${PWD}/config/mongodb/mongodb-entrypoint.sh:/docker-entrypoint-initdb.d/mongodb-entrypoint.sh
+      - ${MONGO_PEM_KEY_PATH}:/etc/ssl/mongodb.pem
+      - ./config/mongodb/mongod.conf:/etc/mongod.conf
+      - ./config/mongodb/mongodb-entrypoint.sh:/docker-entrypoint-initdb.d/mongodb-entrypoint.sh
     networks:
       - haniot-network
     logging:
@@ -120,9 +120,9 @@ services:
     command: ["mongod", "--config", "/etc/mongod.conf"]
     volumes:
       - mongo-notification-data:/data/db
-      - ${PWD}/${MONGO_PEM_KEY_PATH}:/etc/ssl/mongodb.pem
-      - ${PWD}/config/mongodb/mongod.conf:/etc/mongod.conf
-      - ${PWD}/config/mongodb/mongodb-entrypoint.sh:/docker-entrypoint-initdb.d/mongodb-entrypoint.sh
+      - ${MONGO_PEM_KEY_PATH}:/etc/ssl/mongodb.pem
+      - ./config/mongodb/mongod.conf:/etc/mongod.conf
+      - ./config/mongodb/mongodb-entrypoint.sh:/docker-entrypoint-initdb.d/mongodb-entrypoint.sh
     networks:
       - haniot-network
     logging:
@@ -158,8 +158,8 @@ services:
       - PORT_REDIS=6379
       - HOST_REDIS=redis-ag
     volumes:
-      - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
-      - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
+      - ${SSL_KEY_PATH}:/etc/ssl/server.key
+      - ${SSL_CERT_PATH}:/etc/ssl/server.cert
       - ${JWT_PUBLIC_KEY_PATH}:/etc/.certs/jwt.pub
     networks:
       - haniot-network
@@ -187,8 +187,8 @@ services:
       - LS_SECRET_KEY=${LS_SECRET_KEY}
       - RECAPTCHA_KEY=${RECAPTCHA_KEY}
     volumes:
-      - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
-      - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
+      - ${SSL_KEY_PATH}:/etc/ssl/server.key
+      - ${SSL_CERT_PATH}:/etc/ssl/server.cert
     networks:
       - haniot-network
     logging:
@@ -219,8 +219,8 @@ services:
       - RABBITMQ_URI=${ACCOUNT_RABBITMQ_URI}
       - DASHBOARD_HOST=${DASH_URL}
     volumes:
-      - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
-      - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
+      - ${SSL_KEY_PATH}:/etc/ssl/server.key
+      - ${SSL_CERT_PATH}:/etc/ssl/server.cert
       - ${JWT_PRIVATE_KEY_PATH}:/etc/.certs/jwt.key
       - ${JWT_PUBLIC_KEY_PATH}:/etc/.certs/jwt.pub
     networks:
@@ -247,8 +247,8 @@ services:
       - MONGODB_URI=mongodb://${MHEALTH_DB_USER}:${MHEALTH_DB_PASS}@mongo-mhealth:27017/mhealth?ssl=true
       - RABBITMQ_URI=${MHEALTH_RABBITMQ_URI}
     volumes:
-      - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
-      - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
+      - ${SSL_KEY_PATH}:/etc/ssl/server.key
+      - ${SSL_CERT_PATH}:/etc/ssl/server.cert
     networks:
       - haniot-network
     logging:
@@ -273,8 +273,8 @@ services:
       - MONGODB_URI=mongodb://${EHR_DB_USER}:${EHR_DB_PASS}@mongo-ehr:27017/ehr?ssl=true
       - RABBITMQ_URI=${EHR_RABBITMQ_URI}
     volumes:
-      - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
-      - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
+      - ${SSL_KEY_PATH}:/etc/ssl/server.key
+      - ${SSL_CERT_PATH}:/etc/ssl/server.cert
     networks:
       - haniot-network
     logging:
@@ -304,8 +304,8 @@ services:
       - HOST_WHITELIST=[api-gateway]
       - DASHBOARD_HOST=${DASH_URL}
     volumes:
-      - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
-      - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
+      - ${SSL_KEY_PATH}:/etc/ssl/server.key
+      - ${SSL_CERT_PATH}:/etc/ssl/server.cert
     networks:
       - haniot-network
     logging:
@@ -334,8 +334,8 @@ services:
       - MONGODB_URI=mongodb://${NOTIFICATION_DB_USER}:${NOTIFICATION_DB_PASS}@mongo-notification:27017/notification?ssl=true
       - RABBITMQ_URI=${NOTIFICATION_RABBITMQ_URI}
     volumes:
-      - ${PWD}/${SSL_KEY_PATH}:/etc/ssl/server.key
-      - ${PWD}/${SSL_CERT_PATH}:/etc/ssl/server.cert
+      - ${SSL_KEY_PATH}:/etc/ssl/server.key
+      - ${SSL_CERT_PATH}:/etc/ssl/server.cert
     networks:
       - haniot-network
     logging:
@@ -364,17 +364,17 @@ services:
 
 volumes:
   redis-gtw-data:
-    name: redis-gateway-data
+    name: haniot-redis-gateway
   mongo-account-data:
-    name: mongo-account-data
+    name: haniot-mongo-account
   mongo-mhealth-data:
-    name: mongo-mhealth-data
+    name: haniot-mongo-mhealth
   mongo-ehr-data:
-    name: mongo-ehr-data
+    name: haniot-mongo-ehr
   mongo-analytics-data:
-    name: mongo-analytics-data
+    name: haniot-mongo-analytics
   mongo-notification-data:
-    name: mongo-notification-data
+    name: haniot-mongo-notification
 
 networks:
   haniot-network:
