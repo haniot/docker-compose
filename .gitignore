@@ -3,6 +3,7 @@ composer.phar
 
 # dotenv environment variables file
 .env
+.env.backup
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache

@@ -1,0 +1,478 @@
+version: "3.7"
+services:
+  redis-ag: # API Gateway database
+    image: redis
+    container_name: haniot-redis
+    restart: always
+    command: ["redis-server", "/etc/redis.conf"]
+    volumes:
+      - redis-gtw-data:/data
+      - ./config/redisdb/redis.conf:/etc/redis.conf
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+
+  mongo-account: # Account service databases
+    image: mongo
+    container_name: haniot-mongo-account
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_ADMIN_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_ADMIN_PASS}
+      - MONGO_APPLICATION_DATABASE=account
+      - MONGO_APPLICATION_USER=${ACCOUNT_DB_USER}
+      - MONGO_APPLICATION_PASS=${ACCOUNT_DB_PASS}
+    command: ["mongod", "--config", "/etc/mongod.conf"]
+    volumes:
+      - mongo-account-data:/data/db
+      - ${MONGO_PEM_KEY_PATH}:/etc/ssl/mongodb.pem
+      - ./config/mongodb/mongod.conf:/etc/mongod.conf
+      - ./config/mongodb/mongodb-entrypoint.sh:/docker-entrypoint-initdb.d/mongodb-entrypoint.sh
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+    labels:
+      # Adding this label means this container should be stopped while it's being backed up:
+      - "docker-volume-backup.stop-during-backup=true"
+
+  mongo-mhealth: # MHealth service databases
+    image: mongo
+    container_name: haniot-mongo-mhealth
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_ADMIN_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_ADMIN_PASS}
+      - MONGO_APPLICATION_DATABASE=mhealth
+      - MONGO_APPLICATION_USER=${MHEALTH_DB_USER}
+      - MONGO_APPLICATION_PASS=${MHEALTH_DB_PASS}
+    command: ["mongod", "--config", "/etc/mongod.conf"]
+    volumes:
+      - mongo-mhealth-data:/data/db
+      - ${MONGO_PEM_KEY_PATH}:/etc/ssl/mongodb.pem
+      - ./config/mongodb/mongod.conf:/etc/mongod.conf
+      - ./config/mongodb/mongodb-entrypoint.sh:/docker-entrypoint-initdb.d/mongodb-entrypoint.sh
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+    labels:
+      # Adding this label means this container should be stopped while it's being backed up:
+      - "docker-volume-backup.stop-during-backup=true"
+
+  mongo-ehr: # EHR service databases
+    image: mongo
+    container_name: haniot-mongo-ehr
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_ADMIN_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_ADMIN_PASS}
+      - MONGO_APPLICATION_DATABASE=ehr
+      - MONGO_APPLICATION_USER=${EHR_DB_USER}
+      - MONGO_APPLICATION_PASS=${EHR_DB_PASS}
+    command: ["mongod", "--config", "/etc/mongod.conf"]
+    volumes:
+      - mongo-ehr-data:/data/db
+      - ${MONGO_PEM_KEY_PATH}:/etc/ssl/mongodb.pem
+      - ./config/mongodb/mongod.conf:/etc/mongod.conf
+      - ./config/mongodb/mongodb-entrypoint.sh:/docker-entrypoint-initdb.d/mongodb-entrypoint.sh
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+    labels:
+      # Adding this label means this container should be stopped while it's being backed up:
+      - "docker-volume-backup.stop-during-backup=true"
+
+  mongo-analytics: # Analytics service databases
+    image: mongo
+    container_name: haniot-mongo-analytics
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_ADMIN_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_ADMIN_PASS}
+      - MONGO_APPLICATION_DATABASE=analytics
+      - MONGO_APPLICATION_USER=${ANALYTICS_DB_USER}
+      - MONGO_APPLICATION_PASS=${ANALYTICS_DB_PASS}
+    command: ["mongod", "--config", "/etc/mongod.conf"]
+    volumes:
+      - mongo-analytics-data:/data/db
+      - ${MONGO_PEM_KEY_PATH}:/etc/ssl/mongodb.pem
+      - ./config/mongodb/mongod.conf:/etc/mongod.conf
+      - ./config/mongodb/mongodb-entrypoint.sh:/docker-entrypoint-initdb.d/mongodb-entrypoint.sh
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+    labels:
+      # Adding this label means this container should be stopped while it's being backed up:
+      - "docker-volume-backup.stop-during-backup=true"
+
+  mongo-notification: # Notification service databases
+    image: mongo
+    container_name: haniot-mongo-notification
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_ADMIN_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_ADMIN_PASS}
+      - MONGO_APPLICATION_DATABASE=notification
+      - MONGO_APPLICATION_USER=${NOTIFICATION_DB_USER}
+      - MONGO_APPLICATION_PASS=${NOTIFICATION_DB_PASS}
+    command: ["mongod", "--config", "/etc/mongod.conf"]
+    volumes:
+      - mongo-notification-data:/data/db
+      - ${MONGO_PEM_KEY_PATH}:/etc/ssl/mongodb.pem
+      - ./config/mongodb/mongod.conf:/etc/mongod.conf
+      - ./config/mongodb/mongodb-entrypoint.sh:/docker-entrypoint-initdb.d/mongodb-entrypoint.sh
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+    labels:
+      # Adding this label means this container should be stopped while it's being backed up:
+      - "docker-volume-backup.stop-during-backup=true"
+
+  api-gateway: # Container for HANIoT API Gateway
+    image: haniot/api-gateway
+    container_name: haniot-api-gateway
+    restart: always
+    ports:
+      - ${AG_PORT_HTTP:-8080}:${AG_PORT_HTTP:-8080}  # HTTP port, visible externally to the host
+      - ${AG_PORT_HTTPS:-8081}:${AG_PORT_HTTPS:-8081}  # HTTPS port, visible externally to the host
+    depends_on:
+      - redis-ag
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT_HTTP=${AG_PORT_HTTP:-8080}
+      - PORT_HTTPS=${AG_PORT_HTTPS:-8081}
+      - SSL_KEY_PATH=/etc/ssl/server.key
+      - SSL_CERT_PATH=/etc/ssl/server.cert
+      - JWT_PUBLIC_KEY_PATH=/etc/.certs/jwt.pub
+      - ISSUER=haniot
+      - RECAPTCHA_SERVER_KEY=${RECAPTCHA_SERVER_KEY}
+      - API_GATEWAY_SERVICE=https://api-gateway:${AG_PORT_HTTPS}
+      - ACCOUNT_SERVICE=https://account:3001
+      - MHEALTH_SERVICE=https://mhealth:4001
+      - EHR_SERVICE=https://ehr:5001
+      - ANALYTICS_SERVICE=https://analytics:6001
+      - NOTIFICATION_SERVICE=https://notification:7001
+      - EMULATE_REDIS=false
+      - PORT_REDIS=6379
+      - HOST_REDIS=redis-ag
+    volumes:
+      - ${SSL_KEY_PATH}:/etc/ssl/server.key
+      - ${SSL_CERT_PATH}:/etc/ssl/server.cert
+      - ${JWT_PUBLIC_KEY_PATH}:/etc/.certs/jwt.pub
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+
+  dashboard: # Container for HANIoT dashboard app
+    image: haniot/dashboard
+    container_name: haniot-dashboard
+    restart: always
+    depends_on:
+      - api-gateway
+    ports:
+      - ${DASH_PORT_HTTP:-80}:${DASH_PORT_HTTP:-80}
+      - ${DASH_PORT_HTTPS:-443}:${DASH_PORT_HTTPS:-443}
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT_HTTP=${DASH_PORT_HTTP:-80}
+      - PORT_HTTPS=${DASH_PORT_HTTPS:-443}
+      - SSL_KEY_PATH=/etc/ssl/server.key
+      - SSL_CERT_PATH=/etc/ssl/server.cert
+      - API_GATEWAY_SERVICE=${AG_URL}:${AG_PORT_HTTPS}
+      - LS_SECRET_KEY=${LS_SECRET_KEY}
+      - RECAPTCHA_KEY=${RECAPTCHA_KEY}
+    volumes:
+      - ${SSL_KEY_PATH}:/etc/ssl/server.key
+      - ${SSL_CERT_PATH}:/etc/ssl/server.cert
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+
+  account: # Container for HANIoT Account Service
+    image: haniot/account-service
+    container_name: haniot-account
+    restart: always
+    depends_on:
+      - mongo-account
+      - rabbitmq
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT_HTTP=3000
+      - PORT_HTTPS=3001
+      - HOST_WHITELIST=[api-gateway]
+      - SSL_KEY_PATH=/etc/ssl/server.key
+      - SSL_CERT_PATH=/etc/ssl/server.cert
+      - JWT_PRIVATE_KEY_PATH=/etc/.certs/jwt.key
+      - JWT_PUBLIC_KEY_PATH=/etc/.certs/jwt.pub
+      - ISSUER=haniot
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@haniot.com}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      - MONGODB_URI=mongodb://${ACCOUNT_DB_USER}:${ACCOUNT_DB_PASS}@mongo-account:27017/account?ssl=true
+      - RABBITMQ_URI=${ACCOUNT_RABBITMQ_URI}
+      - DASHBOARD_HOST=${DASH_URL}
+    volumes:
+      - ${SSL_KEY_PATH}:/etc/ssl/server.key
+      - ${SSL_CERT_PATH}:/etc/ssl/server.cert
+      - ${JWT_PRIVATE_KEY_PATH}:/etc/.certs/jwt.key
+      - ${JWT_PUBLIC_KEY_PATH}:/etc/.certs/jwt.pub
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+
+  mhealth: # Container for HANIoT MHealth Service
+    image: haniot/mhealth-service
+    container_name: haniot-mhealth
+    restart: always
+    depends_on:
+      - mongo-mhealth
+      - rabbitmq
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT_HTTP=4000
+      - PORT_HTTPS=4001
+      - HOST_WHITELIST=[api-gateway]
+      - SSL_KEY_PATH=/etc/ssl/server.key
+      - SSL_CERT_PATH=/etc/ssl/server.cert
+      - MONGODB_URI=mongodb://${MHEALTH_DB_USER}:${MHEALTH_DB_PASS}@mongo-mhealth:27017/mhealth?ssl=true
+      - RABBITMQ_URI=${MHEALTH_RABBITMQ_URI}
+    volumes:
+      - ${SSL_KEY_PATH}:/etc/ssl/server.key
+      - ${SSL_CERT_PATH}:/etc/ssl/server.cert
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+
+  ehr: # Container for HANIoT EHR Service
+    image: haniot/ehr-service
+    container_name: haniot-ehr
+    restart: always
+    depends_on:
+      - mongo-ehr
+      - rabbitmq
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT_HTTP=5000
+      - PORT_HTTPS=5001
+      - HOST_WHITELIST=[api-gateway]
+      - SSL_KEY_PATH=/etc/ssl/server.key
+      - SSL_CERT_PATH=/etc/ssl/server.cert
+      - MONGODB_URI=mongodb://${EHR_DB_USER}:${EHR_DB_PASS}@mongo-ehr:27017/ehr?ssl=true
+      - RABBITMQ_URI=${EHR_RABBITMQ_URI}
+    volumes:
+      - ${SSL_KEY_PATH}:/etc/ssl/server.key
+      - ${SSL_CERT_PATH}:/etc/ssl/server.cert
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+
+  analytics: # Container for HANIoT Analytics Service
+    image: haniot/analytics-service
+    container_name: haniot-analytics
+    restart: always
+    depends_on:
+      - mongo-analytics
+      - rabbitmq
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT_HTTP=6000
+      - PORT_HTTPS=6001
+      - SSL_KEY_PATH=/etc/ssl/server.key
+      - SSL_CERT_PATH=/etc/ssl/server.cert
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_BUCKET_NAME=${AWS_BUCKET_NAME}
+      - AWS_BUCKET_REGION=${AWS_BUCKET_REGION}
+      - MONGODB_URI=mongodb://${ANALYTICS_DB_USER}:${ANALYTICS_DB_PASS}@mongo-analytics:27017/analytics?ssl=true
+      - RABBITMQ_URI=${ANALYTICS_RABBITMQ_URI}
+      - HOST_WHITELIST=[api-gateway]
+      - DASHBOARD_HOST=${DASH_URL}
+    volumes:
+      - ${SSL_KEY_PATH}:/etc/ssl/server.key
+      - ${SSL_CERT_PATH}:/etc/ssl/server.cert
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+
+  notification: # Container for HANIoT Notification Service
+    image: haniot/notification-service
+    container_name: haniot-notification
+    restart: always
+    depends_on:
+      - mongo-notification
+      - rabbitmq
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT_HTTP=7000
+      - PORT_HTTPS=7001
+      - HOST_WHITELIST=[api-gateway]
+      - SSL_KEY_PATH=/etc/ssl/server.key
+      - SSL_CERT_PATH=/etc/ssl/server.cert
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - MONGODB_URI=mongodb://${NOTIFICATION_DB_USER}:${NOTIFICATION_DB_PASS}@mongo-notification:27017/notification?ssl=true
+      - RABBITMQ_URI=${NOTIFICATION_RABBITMQ_URI}
+    volumes:
+      - ${SSL_KEY_PATH}:/etc/ssl/server.key
+      - ${SSL_CERT_PATH}:/etc/ssl/server.cert
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+
+  rabbitmq: # Container for RabbitMQ
+    image: rabbitmq:3.7.17
+    container_name: haniot-rabbitmq
+    restart: always
+    ports:
+      - ${RABBITMQ_MGMT_PORT:-15672}:15672 # AMQP Management UI
+      - ${RABBITMQ_PORT:-5672}:5672 # AMQP Service
+    volumes:
+      - ./config/rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins
+      - ./config/rabbitmq/rabbit_config.json:/etc/rabbitmq/rabbit_config.json
+    environment:
+      - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbitmq_management load_definitions "/etc/rabbitmq/rabbit_config.json"
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+
+  ## VOLUMES BACKUPS
+  account-backup:
+    image: futurice/docker-volume-backup:2.0.1
+    container_name: haniot-account-backup
+    restart: always
+    env_file:
+      - .env.backup
+    environment:
+      - BACKUP_CRON_EXPRESSION=0 4 */1 * * # “At 04:00 on every day-of-month.”
+      - BACKUP_FILENAME=account-backup-%Y-%m-%dT%H-%M-%S.tar.gz
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro # Allow use of the "stop-during-backup" feature
+      - mongo-account-data:/backup/haniot-mongo-account:ro
+      - ./backups:/archive
+    networks:
+      - haniot-network
+
+  mhealth-backup:
+    image: futurice/docker-volume-backup:2.0.1
+    container_name: haniot-mhealth-backup
+    restart: always
+    env_file:
+      - .env.backup
+    environment:
+      - BACKUP_CRON_EXPRESSION=0 4 */1 * * # “At 04:00 on every day-of-month.”
+      - BACKUP_FILENAME=mhealth-backup-%Y-%m-%dT%H-%M-%S.tar.gz
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro # Allow use of the "stop-during-backup" feature
+      - mongo-mhealth-data:/backup/haniot-mongo-mhealth:ro
+      - ./backups:/archive
+    networks:
+      - haniot-network
+
+  ehr-backup:
+    image: futurice/docker-volume-backup:2.0.1
+    container_name: haniot-ehr-backup
+    restart: always
+    env_file:
+      - .env.backup
+    environment:
+      - BACKUP_CRON_EXPRESSION=0 4 */1 * * # “At 04:00 on every day-of-month.”
+      - BACKUP_FILENAME=ehr-backup-%Y-%m-%dT%H-%M-%S.tar.gz
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro # Allow use of the "stop-during-backup" feature
+      - mongo-ehr-data:/backup/haniot-mongo-ehr:ro
+      - ./backups:/archive
+    networks:
+      - haniot-network
+
+  analytics-backup:
+    image: futurice/docker-volume-backup:2.0.1
+    container_name: haniot-analytics-backup
+    restart: always
+    env_file:
+      - .env.backup
+    environment:
+      - BACKUP_CRON_EXPRESSION=0 4 */1 * * # “At 04:00 on every day-of-month.”
+      - BACKUP_FILENAME=analytics-backup-%Y-%m-%dT%H-%M-%S.tar.gz
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro # Allow use of the "stop-during-backup" feature
+      - mongo-analytics-data:/backup/haniot-mongo-analytics:ro
+      - ./backups:/archive
+    networks:
+      - haniot-network
+
+  notification-backup:
+    image: futurice/docker-volume-backup:2.0.1
+    container_name: haniot-notification-backup
+    restart: always
+    env_file:
+      - .env.backup
+    environment:
+      - BACKUP_CRON_EXPRESSION=0 4 */1 * * # “At 04:00 on every day-of-month.”
+      - BACKUP_FILENAME=notification-backup-%Y-%m-%dT%H-%M-%S.tar.gz
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro # Allow use of the "stop-during-backup" feature
+      - mongo-notification-data:/backup/haniot-mongo-notification:ro
+      - ./backups:/archive
+    networks:
+      - haniot-network
+
+volumes:
+  redis-gtw-data:
+    name: haniot-redis-gateway
+  mongo-account-data:
+    name: haniot-mongo-account
+  mongo-mhealth-data:
+    name: haniot-mongo-mhealth
+  mongo-ehr-data:
+    name: haniot-mongo-ehr
+  mongo-analytics-data:
+    name: haniot-mongo-analytics
+  mongo-notification-data:
+    name: haniot-mongo-notification
+
+networks:
+  haniot-network:
+    name: haniot-network
+    driver: bridge
