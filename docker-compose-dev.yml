@@ -15,6 +15,21 @@ services:
       options:
         max-size: 100m
 
+  redis-ds-agent: # Redis container for the Data Sync Agent
+    image: redis
+    container_name: haniot-redis-ds-agent
+    restart: always
+    command: ["redis-server", "/etc/redis.conf"]
+    volumes:
+      - redis-ds-agent-data:/data
+      - ./config/redisdb/redis.conf:/etc/redis.conf
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+
   mongo-account: # Account service databases
     image: mongo
     container_name: haniot-mongo-account
@@ -130,6 +145,29 @@ services:
       options:
         max-size: 100m
 
+  mongo-ds-agent: # MongoDB container for the Data Sync Agent service
+    image: mongo
+    container_name: haniot-mongo-ds-agent
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_ADMIN_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_ADMIN_PASS}
+      - MONGO_APPLICATION_DATABASE=ds-agent
+      - MONGO_APPLICATION_USER=${DS_DB_USER}
+      - MONGO_APPLICATION_PASS=${DS_DB_PASS}
+    command: ["mongod", "--config", "/etc/mongod.conf"]
+    volumes:
+      - mongo-ds-agent-data:/data/db
+      - ${MONGO_PEM_KEY_PATH}:/etc/ssl/mongodb.pem
+      - ./config/mongodb/mongod.conf:/etc/mongod.conf
+      - ./config/mongodb/mongodb-entrypoint.sh:/docker-entrypoint-initdb.d/mongodb-entrypoint.sh
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+
   api-gateway: # Container for HANIoT API Gateway
     build: ./api-gateway
     container_name: haniot-api-gateway
@@ -154,6 +192,8 @@ services:
       - EHR_SERVICE=https://ehr:5001
       - ANALYTICS_SERVICE=https://analytics:6001
       - NOTIFICATION_SERVICE=https://notification:7001
+      - TIME_SERIES_SERVICE=https://time-series:8001
+      - DS_AGENT_SERVICE=https://ds-agent:9001
       - EMULATE_REDIS=false
       - PORT_REDIS=6379
       - HOST_REDIS=redis-ag
@@ -207,7 +247,6 @@ services:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=3000
       - PORT_HTTPS=3001
-      - HOST_WHITELIST=[api-gateway]
       - SSL_KEY_PATH=/etc/ssl/server.key
       - SSL_CERT_PATH=/etc/ssl/server.cert
       - JWT_PRIVATE_KEY_PATH=/etc/.certs/jwt.key
@@ -241,7 +280,6 @@ services:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=4000
       - PORT_HTTPS=4001
-      - HOST_WHITELIST=[api-gateway]
       - SSL_KEY_PATH=/etc/ssl/server.key
       - SSL_CERT_PATH=/etc/ssl/server.cert
       - MONGODB_URI=mongodb://${MHEALTH_DB_USER}:${MHEALTH_DB_PASS}@mongo-mhealth:27017/mhealth?ssl=true
@@ -267,7 +305,6 @@ services:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=5000
       - PORT_HTTPS=5001
-      - HOST_WHITELIST=[api-gateway]
       - SSL_KEY_PATH=/etc/ssl/server.key
       - SSL_CERT_PATH=/etc/ssl/server.cert
       - MONGODB_URI=mongodb://${EHR_DB_USER}:${EHR_DB_PASS}@mongo-ehr:27017/ehr?ssl=true
@@ -301,7 +338,6 @@ services:
       - AWS_BUCKET_REGION=${AWS_BUCKET_REGION}
       - MONGODB_URI=mongodb://${ANALYTICS_DB_USER}:${ANALYTICS_DB_PASS}@mongo-analytics:27017/analytics?ssl=true
       - RABBITMQ_URI=${ANALYTICS_RABBITMQ_URI}
-      - HOST_WHITELIST=[api-gateway]
       - DASHBOARD_HOST=${DASH_URL}
     volumes:
       - ${SSL_KEY_PATH}:/etc/ssl/server.key
@@ -324,7 +360,6 @@ services:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=7000
       - PORT_HTTPS=7001
-      - HOST_WHITELIST=[api-gateway]
       - SSL_KEY_PATH=/etc/ssl/server.key
       - SSL_CERT_PATH=/etc/ssl/server.cert
       - SMTP_HOST=${SMTP_HOST}
@@ -342,6 +377,63 @@ services:
       driver: json-file
       options:
         max-size: 100m
+
+  time-series: # Container for HANIoT Time Series service
+    build: ./ts-service
+    container_name: haniot-ts-service
+    restart: always
+    depends_on:
+      - rabbitmq
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - PORT_HTTP=8000
+      - PORT_HTTPS=8001
+      - SSL_KEY_PATH=/etc/.certs/server.key
+      - SSL_CERT_PATH=/etc/.certs/server.cert
+      - INFLUXDB_URI=http://127.0.0.1:8086/timeseries
+      - RABBITMQ_URI=${TS_RABBITMQ_URI}
+      - RABBITMQ_CA_PATH=.certs/ca.crt
+    volumes:
+      - ${SSL_KEY_PATH}:/etc/.certs/server.key
+      - ${SSL_CERT_PATH}:/etc/.certs/server.cert
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+
+    ds-agent: # Container for HANIoT Data Sync Agent
+      build: ./ds-agent
+      container_name: haniot-ds-agent
+      restart: always
+      depends_on:
+        - mongo-ds-agent
+        - redis-ds-agent
+        - rabbitmq
+      environment:
+        - NODE_ENV=${NODE_ENV}
+        - PORT_HTTP=9000
+        - PORT_HTTPS=9001
+        - SSL_KEY_PATH=/etc/.certs/server.key
+        - SSL_CERT_PATH=/etc/.certs/server.cert
+        - FITBIT_CLIENT_ID=${FITBIT_CLIENT_ID}
+        - FITBIT_CLIENT_SECRET=${FITBIT_CLIENT_SECRET}
+        - FITBIT_CLIENT_SUBSCRIBER=${FITBIT_CLIENT_SUBSCRIBER}
+        - FITBIT_SUBSCRIBER_ID=${FITBIT_SUBSCRIBER_ID}
+        - EXPRESSION_AUTO_SYNC=${EXPRESSION_AUTO_SYNC}
+        - MONGODB_URI=mongodb://${DS_DB_USER}:${DS_DB_PASS}@mongo-ds-agent:27017/ds-agent?ssl=true
+        - REDIS_URI=redis://redis-ds-agent:6379
+        - RABBITMQ_URI=${DS_RABBITMQ_URI}
+      volumes:
+        - ${SSL_KEY_PATH}:/etc/.certs/server.key
+        - ${SSL_CERT_PATH}:/etc/.certs/server.cert
+      networks:
+        - haniot-network
+      logging:
+        driver: json-file
+        options:
+          max-size: 100m
 
   rabbitmq: # Container for RabbitMQ
     image: rabbitmq:3.7.17
@@ -365,6 +457,8 @@ services:
 volumes:
   redis-gtw-data:
     name: haniot-redis-gateway
+  redis-ds-agent-data:
+    name: haniot-redis-ds-agent
   mongo-account-data:
     name: haniot-mongo-account
   mongo-mhealth-data:
@@ -375,6 +469,8 @@ volumes:
     name: haniot-mongo-analytics
   mongo-notification-data:
     name: haniot-mongo-notification
+  mongo-ds-agent-data:
+    name: haniot-mongo-ds-agent
 
 networks:
   haniot-network:
