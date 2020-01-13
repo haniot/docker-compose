@@ -145,7 +145,7 @@ services:
       options:
         max-size: 100m
 
-  mongo-ds-agent: # MongoDB container for the Data Sync Agent service
+  mongo-ds-agent: # Data Sync Agent service databases
     image: mongo
     container_name: haniot-mongo-ds-agent
     restart: always
@@ -392,7 +392,6 @@ services:
       - SSL_CERT_PATH=/etc/.certs/server.cert
       - INFLUXDB_URI=http://127.0.0.1:8086/timeseries
       - RABBITMQ_URI=${TS_RABBITMQ_URI}
-      - RABBITMQ_CA_PATH=.certs/ca.crt
     volumes:
       - ${SSL_KEY_PATH}:/etc/.certs/server.key
       - ${SSL_CERT_PATH}:/etc/.certs/server.cert

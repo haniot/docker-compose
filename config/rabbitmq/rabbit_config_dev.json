@@ -2,22 +2,34 @@
   "rabbit_version": "3.7.17",
   "users": [
     {
-      "name": "mhealth.app",
-      "password_hash": "8qmA09D/00iGatMvD0GG5CkjLv/i5KtmV3kWfNs4PU7iuqGz",
-      "hashing_algorithm": "rabbit_password_hashing_sha256",
-      "tags": "application"
+      "name":"mhealth.app",
+      "password_hash":"SiStYSdwQeuWIVnNZSDJgAD/SEocEC44ivCDBLCkGc4RmXeQ",
+      "hashing_algorithm":"rabbit_password_hashing_sha256",
+      "tags":"application"
     },
     {
-      "name": "analytics.app",
-      "password_hash": "sjfFkwvdqBxxoFR9j2LGcJV5isF8NcZBSzkgd8Tce7lyEAA0",
-      "hashing_algorithm": "rabbit_password_hashing_sha256",
-      "tags": "application"
+      "name":"analytics.app",
+      "password_hash":"h6SQUC0mg1UIJwEJgq9RUKEIyLSuELRm0upE+SiHbfvL5u4P",
+      "hashing_algorithm":"rabbit_password_hashing_sha256",
+      "tags":"application"
     },
     {
-      "name": "notification.app",
-      "password_hash": "ZOncWfbX3k8+s1nhZRsrDP/HgIZXbAXCejneQSuyTgl2JP1R",
-      "hashing_algorithm": "rabbit_password_hashing_sha256",
-      "tags": "application"
+      "name":"ds.app",
+      "password_hash":"Nlx2Epat9/9EFvnXav59wRk7skxjsIIZcVB4ae73hNOO85eN",
+      "hashing_algorithm":"rabbit_password_hashing_sha256",
+      "tags":"application"
+    },
+    {
+      "name":"notification.app",
+      "password_hash":"NjMrU1es4P8tODShWr6c3/7/8ZsC0qxn9Zbd9+ahoJdRw6Xe",
+      "hashing_algorithm":"rabbit_password_hashing_sha256",
+      "tags":"application"
+    },
+    {
+      "name":"ts.app",
+      "password_hash":"ywXyyYZDdW1Ami0tbwYwrb/rnUTmWgyITBEZ7GnjmK1lpi26",
+      "hashing_algorithm":"rabbit_password_hashing_sha256",
+      "tags":"application"
     },
     {
       "name": "haniot",
@@ -26,26 +38,14 @@
       "tags": "administrator"
     },
     {
-      "name": "account.app",
-      "password_hash": "OhtW1nz0JfbpvNV+SYydaEdrAvHSyNSqZdUzCswlyo+eaWJW",
-      "hashing_algorithm": "rabbit_password_hashing_sha256",
-      "tags": "application"
-    },
-    {
-      "name": "ehr.app",
-      "password_hash": "TzyH7fcBWFOoVyCQ+buRRE/JY2/bnmd3hMwtrGtnjI7AfnGu",
-      "hashing_algorithm": "rabbit_password_hashing_sha256",
-      "tags": "application"
-    },
-    {
-      "name":"ts.app",
-      "password_hash":"CQneZkEW+6SR2Ru2vXa3rImOk+ZJzGr1fS67ykdspQoldHLO",
+      "name":"account.app",
+      "password_hash":"xXPdu1nEOm9ncvsG23bFX5SgwimfgFwMu9IcoAtf0tQBaI2J",
       "hashing_algorithm":"rabbit_password_hashing_sha256",
       "tags":"application"
     },
     {
-      "name":"ds.app",
-      "password_hash":"i0+dBaEQUp1rksSSiemmWozkElxz6vSQ3P1gTFmIIzDyS1N7",
+      "name":"ehr.app",
+      "password_hash":"IE4DR2f4KIMNiFUy2Gv3anKXfRi14uqtPH8esQoIWJEF0NkA",
       "hashing_algorithm":"rabbit_password_hashing_sha256",
       "tags":"application"
     }
@@ -67,7 +67,14 @@
       "read": ".*"
     },
     {
-      "user": "analytics.app",
+      "user": "notification.app",
+      "vhost": "haniot",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "ds.app",
       "vhost": "haniot",
       "configure": ".*",
       "write": ".*",
@@ -81,14 +88,14 @@
       "read": ".*"
     },
     {
-      "user": "haniot",
+      "user": "analytics.app",
       "vhost": "haniot",
       "configure": ".*",
       "write": ".*",
       "read": ".*"
     },
     {
-      "user": "notification.app",
+      "user": "haniot",
       "vhost": "haniot",
       "configure": ".*",
       "write": ".*",
@@ -103,13 +110,6 @@
     },
     {
       "user": "ts.app",
-      "vhost": "haniot",
-      "configure": ".*",
-      "write": ".*",
-      "read": ".*"
-    },
-    {
-      "user": "ds.app",
       "vhost": "haniot",
       "configure": ".*",
       "write": ".*",

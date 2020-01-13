@@ -145,7 +145,7 @@ services:
       options:
         max-size: 100m
 
-  mongo-ds-agent: # MongoDB container for the Data Sync Agent service
+  mongo-ds-agent: # Data Sync Agent service databases
     image: mongo
     container_name: haniot-mongo-ds-agent
     restart: always
@@ -169,7 +169,7 @@ services:
         max-size: 100m
 
   api-gateway: # Container for HANIoT API Gateway
-    build: ./api-gateway
+    build: ../api-gateway
     container_name: haniot-api-gateway
     restart: always
     ports:
@@ -209,7 +209,7 @@ services:
         max-size: 100m
 
   dashboard: # Container for HANIoT dashboard app
-    build: ./dashboard-app
+    build: ../dashboard-app
     container_name: haniot-dashboard
     restart: always
     depends_on:
@@ -237,7 +237,7 @@ services:
         max-size: 100m
 
   account: # Container for HANIoT Account Service
-    build: ./account
+    build: ../account
     container_name: haniot-account
     restart: always
     depends_on:
@@ -270,7 +270,7 @@ services:
         max-size: 100m
 
   mhealth: # Container for HANIoT MHealth Service
-    build: ./mhealth
+    build: ../mhealth
     container_name: haniot-mhealth
     restart: always
     depends_on:
@@ -295,7 +295,7 @@ services:
         max-size: 100m
 
   ehr: # Container for HANIoT EHR Service
-    build: ./ehr
+    build: ../ehr
     container_name: haniot-ehr
     restart: always
     depends_on:
@@ -320,7 +320,7 @@ services:
         max-size: 100m
 
   analytics: # Container for HANIoT Analytics Service
-    build: ./analytics
+    build: ../analytics
     container_name: haniot-analytics
     restart: always
     depends_on:
@@ -350,7 +350,7 @@ services:
         max-size: 100m
 
   notification: # Container for HANIoT Notification Service
-    build: ./notification
+    build: ../notification
     container_name: haniot-notification
     restart: always
     depends_on:
@@ -379,7 +379,7 @@ services:
         max-size: 100m
 
   time-series: # Container for HANIoT Time Series service
-    build: ./ts-service
+    build: ../timeseries
     container_name: haniot-ts-service
     restart: always
     depends_on:
@@ -392,7 +392,6 @@ services:
       - SSL_CERT_PATH=/etc/.certs/server.cert
       - INFLUXDB_URI=http://127.0.0.1:8086/timeseries
       - RABBITMQ_URI=${TS_RABBITMQ_URI}
-      - RABBITMQ_CA_PATH=.certs/ca.crt
     volumes:
       - ${SSL_KEY_PATH}:/etc/.certs/server.key
       - ${SSL_CERT_PATH}:/etc/.certs/server.cert
@@ -403,37 +402,37 @@ services:
       options:
         max-size: 100m
 
-    ds-agent: # Container for HANIoT Data Sync Agent
-      build: ./ds-agent
-      container_name: haniot-ds-agent
-      restart: always
-      depends_on:
-        - mongo-ds-agent
-        - redis-ds-agent
-        - rabbitmq
-      environment:
-        - NODE_ENV=${NODE_ENV}
-        - PORT_HTTP=9000
-        - PORT_HTTPS=9001
-        - SSL_KEY_PATH=/etc/.certs/server.key
-        - SSL_CERT_PATH=/etc/.certs/server.cert
-        - FITBIT_CLIENT_ID=${FITBIT_CLIENT_ID}
-        - FITBIT_CLIENT_SECRET=${FITBIT_CLIENT_SECRET}
-        - FITBIT_CLIENT_SUBSCRIBER=${FITBIT_CLIENT_SUBSCRIBER}
-        - FITBIT_SUBSCRIBER_ID=${FITBIT_SUBSCRIBER_ID}
-        - EXPRESSION_AUTO_SYNC=${EXPRESSION_AUTO_SYNC}
-        - MONGODB_URI=mongodb://${DS_DB_USER}:${DS_DB_PASS}@mongo-ds-agent:27017/ds-agent?ssl=true
-        - REDIS_URI=redis://redis-ds-agent:6379
-        - RABBITMQ_URI=${DS_RABBITMQ_URI}
-      volumes:
-        - ${SSL_KEY_PATH}:/etc/.certs/server.key
-        - ${SSL_CERT_PATH}:/etc/.certs/server.cert
-      networks:
-        - haniot-network
-      logging:
-        driver: json-file
-        options:
-          max-size: 100m
+  ds-agent: # Container for HANIoT Data Sync Agent
+    build: ../ds-agent
+    container_name: haniot-ds-agent
+    restart: always
+    depends_on:
+      - mongo-ds-agent
+      - redis-ds-agent
+      - rabbitmq
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - PORT_HTTP=9000
+      - PORT_HTTPS=9001
+      - SSL_KEY_PATH=/etc/.certs/server.key
+      - SSL_CERT_PATH=/etc/.certs/server.cert
+      - FITBIT_CLIENT_ID=${FITBIT_CLIENT_ID}
+      - FITBIT_CLIENT_SECRET=${FITBIT_CLIENT_SECRET}
+      - FITBIT_CLIENT_SUBSCRIBER=${FITBIT_CLIENT_SUBSCRIBER}
+      - FITBIT_SUBSCRIBER_ID=${FITBIT_SUBSCRIBER_ID}
+      - EXPRESSION_AUTO_SYNC=${EXPRESSION_AUTO_SYNC}
+      - MONGODB_URI=mongodb://${DS_DB_USER}:${DS_DB_PASS}@mongo-ds-agent:27017/ds-agent?ssl=true
+      - REDIS_URI=redis://redis-ds-agent:6379
+      - RABBITMQ_URI=${DS_RABBITMQ_URI}
+    volumes:
+      - ${SSL_KEY_PATH}:/etc/.certs/server.key
+      - ${SSL_CERT_PATH}:/etc/.certs/server.cert
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
 
   rabbitmq: # Container for RabbitMQ
     image: rabbitmq:3.7.17
@@ -444,9 +443,9 @@ services:
       - ${RABBITMQ_PORT:-5672}:5672 # AMQP Service
     volumes:
       - ./config/rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins
-      - ./config/rabbitmq/rabbit_config.json:/etc/rabbitmq/rabbit_config.json
+      - ./config/rabbitmq/rabbit_config_dev.json:/etc/rabbitmq/rabbit_config_dev.json
     environment:
-      - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbitmq_management load_definitions "/etc/rabbitmq/rabbit_config.json"
+      - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbitmq_management load_definitions "/etc/rabbitmq/rabbit_config_dev.json"
     networks:
       - haniot-network
     logging:
