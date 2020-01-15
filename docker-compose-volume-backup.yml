@@ -186,6 +186,22 @@ services:
       # Adding this label means this container should be stopped while it's being backed up:
       - "docker-volume-backup.stop-during-backup=true"
 
+  influxdb-time-series: # Time Series service databases
+    image: influxdb
+    container_name: haniot-influxdb-time-series
+    restart: always
+    volumes:
+      - influxdb-time-series-data:/var/lib/influxdb
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+    labels:
+      # Adding this label means this container should be stopped while it's being backed up:
+      - "docker-volume-backup.stop-during-backup=true"
+
   api-gateway: # Container for HANIoT API Gateway
     image: haniot/api-gateway
     container_name: haniot-api-gateway
@@ -401,6 +417,7 @@ services:
     container_name: haniot-ts-service
     restart: always
     depends_on:
+      - influxdb-time-series
       - rabbitmq
     environment:
       - NODE_ENV=${NODE_ENV}
@@ -408,7 +425,7 @@ services:
       - PORT_HTTPS=8001
       - SSL_KEY_PATH=/etc/.certs/server.key
       - SSL_CERT_PATH=/etc/.certs/server.cert
-      - INFLUXDB_URI=http://127.0.0.1:8086/timeseries
+      - INFLUXDB_URI=http://influxdb-time-series:8086/haniot-timeseries
       - RABBITMQ_URI=${TS_RABBITMQ_URI}
     volumes:
       - ${SSL_KEY_PATH}:/etc/.certs/server.key
@@ -552,6 +569,22 @@ services:
     networks:
       - haniot-network
 
+  time-series-backup:
+    image: futurice/docker-volume-backup:2.0.1
+    container_name: haniot-time-series-backup
+    restart: always
+    env_file:
+      - .env.backup
+    environment:
+      - BACKUP_CRON_EXPRESSION=0 4 */1 * * # “At 04:00 on every day-of-month.”
+      - BACKUP_FILENAME=time-series-backup-%Y-%m-%dT%H-%M-%S.tar.gz
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro # Allow use of the "stop-during-backup" feature
+      - influxdb-time-series-data:/backup/haniot-influxdb-time-series:ro
+      - ./backups:/archive
+    networks:
+      - haniot-network
+
   ds-agent-backup:
     image: futurice/docker-volume-backup:2.0.1
     container_name: haniot-ds-agent-backup
@@ -585,6 +618,8 @@ volumes:
     name: haniot-mongo-notification
   mongo-ds-agent-data:
     name: haniot-mongo-ds-agent
+  influxdb-time-series-data:
+    name: haniot-influxdb-time-series
 
 networks:
   haniot-network:

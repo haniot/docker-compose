@@ -168,6 +168,19 @@ services:
       options:
         max-size: 100m
 
+  influxdb-time-series: # Time Series service databases
+    image: influxdb
+    container_name: haniot-influxdb-time-series
+    restart: always
+    volumes:
+      - influxdb-time-series-data:/var/lib/influxdb
+    networks:
+      - haniot-network
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+
   api-gateway: # Container for HANIoT API Gateway
     build: ../api-gateway
     container_name: haniot-api-gateway
@@ -383,6 +396,7 @@ services:
     container_name: haniot-ts-service
     restart: always
     depends_on:
+      - influxdb-time-series
       - rabbitmq
     environment:
       - NODE_ENV=${NODE_ENV}
@@ -390,7 +404,7 @@ services:
       - PORT_HTTPS=8001
       - SSL_KEY_PATH=/etc/.certs/server.key
       - SSL_CERT_PATH=/etc/.certs/server.cert
-      - INFLUXDB_URI=http://127.0.0.1:8086/timeseries
+      - INFLUXDB_URI=http://influxdb-time-series:8086/haniot-timeseries
       - RABBITMQ_URI=${TS_RABBITMQ_URI}
     volumes:
       - ${SSL_KEY_PATH}:/etc/.certs/server.key
@@ -470,6 +484,8 @@ volumes:
     name: haniot-mongo-notification
   mongo-ds-agent-data:
     name: haniot-mongo-ds-agent
+  influxdb-time-series-data:
+    name: haniot-influxdb-time-series
 
 networks:
   haniot-network:
