@@ -168,12 +168,12 @@ services:
       options:
         max-size: 100m
 
-  influxdb-time-series: # Time Series service databases
+  influxdb-timeseries: # Time Series service databases
     image: influxdb
-    container_name: haniot-influxdb-time-series
+    container_name: haniot-influxdb-timeseries
     restart: always
     volumes:
-      - influxdb-time-series-data:/var/lib/influxdb
+      - influxdb-timeseries-data:/var/lib/influxdb
     networks:
       - haniot-network
     logging:
@@ -182,7 +182,7 @@ services:
         max-size: 100m
 
   api-gateway: # Container for HANIoT API Gateway
-    build: ../api-gateway
+    build: ./api-gateway
     container_name: haniot-api-gateway
     restart: always
     ports:
@@ -205,7 +205,7 @@ services:
       - EHR_SERVICE=https://ehr:5001
       - ANALYTICS_SERVICE=https://analytics:6001
       - NOTIFICATION_SERVICE=https://notification:7001
-      - TIME_SERIES_SERVICE=https://time-series:8001
+      - TIME_SERIES_SERVICE=https://timeseries:8001
       - DS_AGENT_SERVICE=https://ds-agent:9001
       - EMULATE_REDIS=false
       - PORT_REDIS=6379
@@ -222,7 +222,7 @@ services:
         max-size: 100m
 
   dashboard: # Container for HANIoT dashboard app
-    build: ../dashboard-app
+    build: ./dashboard-app
     container_name: haniot-dashboard
     restart: always
     depends_on:
@@ -250,7 +250,7 @@ services:
         max-size: 100m
 
   account: # Container for HANIoT Account Service
-    build: ../account
+    build: ./account
     container_name: haniot-account
     restart: always
     depends_on:
@@ -283,7 +283,7 @@ services:
         max-size: 100m
 
   mhealth: # Container for HANIoT MHealth Service
-    build: ../mhealth
+    build: ./mhealth
     container_name: haniot-mhealth
     restart: always
     depends_on:
@@ -308,7 +308,7 @@ services:
         max-size: 100m
 
   ehr: # Container for HANIoT EHR Service
-    build: ../ehr
+    build: ./ehr
     container_name: haniot-ehr
     restart: always
     depends_on:
@@ -333,7 +333,7 @@ services:
         max-size: 100m
 
   analytics: # Container for HANIoT Analytics Service
-    build: ../analytics
+    build: ./analytics
     container_name: haniot-analytics
     restart: always
     depends_on:
@@ -363,7 +363,7 @@ services:
         max-size: 100m
 
   notification: # Container for HANIoT Notification Service
-    build: ../notification
+    build: ./notification
     container_name: haniot-notification
     restart: always
     depends_on:
@@ -391,12 +391,12 @@ services:
       options:
         max-size: 100m
 
-  time-series: # Container for HANIoT Time Series service
-    build: ../timeseries
-    container_name: haniot-ts-service
+  timeseries: # Container for HANIoT Time Series service
+    build: ./timeseries
+    container_name: haniot-timeseries
     restart: always
     depends_on:
-      - influxdb-time-series
+      - influxdb-timeseries
       - rabbitmq
     environment:
       - NODE_ENV=${NODE_ENV}
@@ -404,7 +404,7 @@ services:
       - PORT_HTTPS=8001
       - SSL_KEY_PATH=/etc/.certs/server.key
       - SSL_CERT_PATH=/etc/.certs/server.cert
-      - INFLUXDB_URI=http://influxdb-time-series:8086/haniot-timeseries
+      - INFLUXDB_URI=http://influxdb-timeseries:8086/timeseries
       - RABBITMQ_URI=${TS_RABBITMQ_URI}
     volumes:
       - ${SSL_KEY_PATH}:/etc/.certs/server.key
@@ -417,7 +417,7 @@ services:
         max-size: 100m
 
   ds-agent: # Container for HANIoT Data Sync Agent
-    build: ../ds-agent
+    build: ./ds-agent
     container_name: haniot-ds-agent
     restart: always
     depends_on:
@@ -432,8 +432,8 @@ services:
       - SSL_CERT_PATH=/etc/.certs/server.cert
       - FITBIT_CLIENT_ID=${FITBIT_CLIENT_ID}
       - FITBIT_CLIENT_SECRET=${FITBIT_CLIENT_SECRET}
-      - FITBIT_CLIENT_SUBSCRIBER=${FITBIT_CLIENT_SUBSCRIBER}
-      - FITBIT_SUBSCRIBER_ID=${FITBIT_SUBSCRIBER_ID}
+      - FITBIT_SUBSCRIBER_ID=${FITBIT_SUB_ID}
+      - FITBIT_CLIENT_SUBSCRIBER=${FITBIT_SUB_VERIFY_CODE}
       - EXPRESSION_AUTO_SYNC=${EXPRESSION_AUTO_SYNC}
       - MONGODB_URI=mongodb://${DS_DB_USER}:${DS_DB_PASS}@mongo-ds-agent:27017/ds-agent?ssl=true
       - REDIS_URI=redis://redis-ds-agent:6379
@@ -449,7 +449,7 @@ services:
         max-size: 100m
 
   rabbitmq: # Container for RabbitMQ
-    image: rabbitmq:3.7.17
+    image: rabbitmq:3.7.23
     container_name: haniot-rabbitmq
     restart: always
     ports:
@@ -484,8 +484,8 @@ volumes:
     name: haniot-mongo-notification
   mongo-ds-agent-data:
     name: haniot-mongo-ds-agent
-  influxdb-time-series-data:
-    name: haniot-influxdb-time-series
+  influxdb-timeseries-data:
+    name: haniot-influxdb-timeseries
 
 networks:
   haniot-network:
