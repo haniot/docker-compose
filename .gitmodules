@@ -33,3 +33,13 @@
 	url = https://github.com/haniot/dashboard-app.git
 	branch = develop
 	ignore = dirty
+[submodule "ds-agent"]
+	path = ds-agent
+	url = https://github.com/haniot/ds-agent
+    branch = develop
+    ignore = dirty
+[submodule "timeseries"]
+	path = timeseries
+	url = https://github.com/haniot/timeseries
+	branch = develop
+	ignore = dirty
