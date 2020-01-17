@@ -2,6 +2,12 @@
   "rabbit_version": "3.7.17",
   "users": [
     {
+      "name": "haniot",
+      "password_hash": "tXM03oxkv3u5noc7r2IWVmKKgP/WgulfbuvDejvcaHyIOmQa",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": "administrator"
+    },
+    {
       "name": "mhealth.app",
       "password_hash": "8qmA09D/00iGatMvD0GG5CkjLv/i5KtmV3kWfNs4PU7iuqGz",
       "hashing_algorithm": "rabbit_password_hashing_sha256",
@@ -18,12 +24,6 @@
       "password_hash": "ZOncWfbX3k8+s1nhZRsrDP/HgIZXbAXCejneQSuyTgl2JP1R",
       "hashing_algorithm": "rabbit_password_hashing_sha256",
       "tags": "application"
-    },
-    {
-      "name": "haniot",
-      "password_hash": "RvFUpX+Cz8crrHeoL9E7EXJ8b+O27VA9ur6Q1EQLMkTvDjXZ",
-      "hashing_algorithm": "rabbit_password_hashing_sha256",
-      "tags": "administrator"
     },
     {
       "name": "account.app",
