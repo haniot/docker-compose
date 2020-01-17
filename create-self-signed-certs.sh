@@ -28,9 +28,9 @@ req_extensions = v3_req
 [req_distinguished_name]
 C  = BR
 ST = PB
-L  = HANIoT
-O  = HANIoT
-CN = haniot.nutes.uepb.edu.br
+L  = PB
+O  = HANIoT CA
+CN = localhost
 # Allow client and server auth. You may want to only allow server auth.
 # Link to SAN names.
 [v3_req]
@@ -57,10 +57,10 @@ EOF
 openssl req \
   -new \
   -newkey rsa:2048 \
-  -days 120 \
+  -days 365 \
   -nodes \
   -x509 \
-  -subj "/C=BR/ST=PB/L=HANIoT/O=HANIoT CA" \
+  -subj "/C=BR/ST=PB/L=PB/O=HANIoT CA/CN=localhost" \
   -keyout "${DIR}/ca.key" \
   -out "${DIR}/ca.crt"
 # For each server/service you want to secure with your CA, repeat the
@@ -81,7 +81,7 @@ openssl req \
 # by our CA.
 openssl x509 \
   -req \
-  -days 120 \
+  -days 365 \
   -in "${DIR}/server.csr" \
   -CA "${DIR}/ca.crt" \
   -CAkey "${DIR}/ca.key" \
