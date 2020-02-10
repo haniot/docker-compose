@@ -432,8 +432,6 @@ services:
       - SSL_CERT_PATH=/etc/.certs/server.cert
       - FITBIT_CLIENT_ID=${FITBIT_CLIENT_ID}
       - FITBIT_CLIENT_SECRET=${FITBIT_CLIENT_SECRET}
-      - FITBIT_SUBSCRIBER_ID=${FITBIT_SUB_ID}
-      - FITBIT_CLIENT_SUBSCRIBER=${FITBIT_SUB_VERIFY_CODE}
       - EXPRESSION_AUTO_SYNC=${EXPRESSION_AUTO_SYNC}
       - MONGODB_URI=mongodb://${DS_DB_USER}:${DS_DB_PASS}@mongo-ds-agent:27017/ds-agent?ssl=true
       - REDIS_URI=redis://redis-ds-agent:6379
