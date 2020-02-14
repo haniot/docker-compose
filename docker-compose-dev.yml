@@ -232,6 +232,7 @@ services:
       - ${DASH_PORT_HTTPS:-443}:${DASH_PORT_HTTPS:-443}
     environment:
       - NODE_ENV=${NODE_ENV:-development}
+      - DASHBOARD_HOST=${DASH_URL}
       - PORT_HTTP=${DASH_PORT_HTTP:-80}
       - PORT_HTTPS=${DASH_PORT_HTTPS:-443}
       - SSL_KEY_PATH=/etc/ssl/server.key
