@@ -1,4 +1,4 @@
-version: "3.7"
+version: "3.8"
 services:
   redis-ag: # API Gateway database
     image: redis
@@ -43,7 +43,7 @@ services:
     command: ["mongod", "--config", "/etc/mongod.conf"]
     volumes:
       - mongo-account-data:/data/db
-      - ${MONGO_PEM_KEY_PATH}:/etc/ssl/mongodb.pem:ro
+      - ./.certs/mongodb/:/etc/ssl/:ro
       - ./config/mongodb/mongod.conf:/etc/mongod.conf:ro
       - ./config/mongodb/mongodb-entrypoint.sh:/docker-entrypoint-initdb.d/mongodb-entrypoint.sh:ro
     networks:
@@ -66,7 +66,7 @@ services:
     command: ["mongod", "--config", "/etc/mongod.conf"]
     volumes:
       - mongo-mhealth-data:/data/db
-      - ${MONGO_PEM_KEY_PATH}:/etc/ssl/mongodb.pem:ro
+      - ./.certs/mongodb/:/etc/ssl/:ro
       - ./config/mongodb/mongod.conf:/etc/mongod.conf:ro
       - ./config/mongodb/mongodb-entrypoint.sh:/docker-entrypoint-initdb.d/mongodb-entrypoint.sh:ro
     networks:
@@ -89,7 +89,7 @@ services:
     command: ["mongod", "--config", "/etc/mongod.conf"]
     volumes:
       - mongo-ehr-data:/data/db
-      - ${MONGO_PEM_KEY_PATH}:/etc/ssl/mongodb.pem:ro
+      - ./.certs/mongodb/:/etc/ssl/:ro
       - ./config/mongodb/mongod.conf:/etc/mongod.conf:ro
       - ./config/mongodb/mongodb-entrypoint.sh:/docker-entrypoint-initdb.d/mongodb-entrypoint.sh:ro
     networks:
@@ -112,7 +112,7 @@ services:
     command: ["mongod", "--config", "/etc/mongod.conf"]
     volumes:
       - mongo-analytics-data:/data/db
-      - ${MONGO_PEM_KEY_PATH}:/etc/ssl/mongodb.pem:ro
+      - ./.certs/mongodb/:/etc/ssl/:ro
       - ./config/mongodb/mongod.conf:/etc/mongod.conf:ro
       - ./config/mongodb/mongodb-entrypoint.sh:/docker-entrypoint-initdb.d/mongodb-entrypoint.sh:ro
     networks:
@@ -135,7 +135,7 @@ services:
     command: ["mongod", "--config", "/etc/mongod.conf"]
     volumes:
       - mongo-notification-data:/data/db
-      - ${MONGO_PEM_KEY_PATH}:/etc/ssl/mongodb.pem:ro
+      - ./.certs/mongodb/:/etc/ssl/:ro
       - ./config/mongodb/mongod.conf:/etc/mongod.conf:ro
       - ./config/mongodb/mongodb-entrypoint.sh:/docker-entrypoint-initdb.d/mongodb-entrypoint.sh:ro
     networks:
@@ -158,7 +158,7 @@ services:
     command: ["mongod", "--config", "/etc/mongod.conf"]
     volumes:
       - mongo-ds-agent-data:/data/db
-      - ${MONGO_PEM_KEY_PATH}:/etc/ssl/mongodb.pem:ro
+      - ./.certs/mongodb/:/etc/ssl/:ro
       - ./config/mongodb/mongod.conf:/etc/mongod.conf:ro
       - ./config/mongodb/mongodb-entrypoint.sh:/docker-entrypoint-initdb.d/mongodb-entrypoint.sh:ro
     networks:
@@ -172,8 +172,16 @@ services:
     image: influxdb
     container_name: haniot-influxdb-timeseries
     restart: always
+    environment:
+      - INFLUXDB_DB=timeseries
+      - INFLUXDB_ADMIN_USER=${INFLUXDB_ADMIN_USER}
+      - INFLUXDB_ADMIN_PASSWORD=${INFLUXDB_ADMIN_PASS}
+      - INFLUXDB_USER=${INFLUXDB_USER}
+      - INFLUXDB_USER_PASSWORD=${INFLUXDB_PASS}
     volumes:
       - influxdb-timeseries-data:/var/lib/influxdb
+      - ./.certs/influxdb/:/etc/ssl/:ro
+      - ./config/influxdb/influxdb.conf:/etc/influxdb/influxdb.conf:ro
     networks:
       - haniot-network
     logging:
@@ -194,9 +202,9 @@ services:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=${AG_PORT_HTTP}
       - PORT_HTTPS=${AG_PORT_HTTPS}
-      - SSL_KEY_PATH=/etc/ssl/server.key
-      - SSL_CERT_PATH=/etc/ssl/server.cert
-      - JWT_PUBLIC_KEY_PATH=/etc/.certs/jwt.pub
+      - SSL_CERT_PATH=/etc/ssl/server_cert.pem
+      - SSL_KEY_PATH=/etc/ssl/server_key.pem
+      - JWT_PUBLIC_KEY_PATH=/etc/ssl/jwt.key.pub
       - ISSUER=haniot
       - RECAPTCHA_SERVER_KEY=${RECAPTCHA_SERVER_KEY}
       - API_GATEWAY_HOSTNAME=${API_GATEWAY_HOSTNAME}
@@ -215,9 +223,9 @@ services:
       - PORT_REDIS=6379
       - HOST_REDIS=redis-ag
     volumes:
-      - ${SSL_KEY_PATH}:/etc/ssl/server.key:ro
-      - ${SSL_CERT_PATH}:/etc/ssl/server.cert:ro
-      - ${JWT_PUBLIC_KEY_PATH}:/etc/.certs/jwt.pub:ro
+      - ./.certs/api-gtw/:/etc/ssl/:ro
+      - ${SSL_CERT_PATH}:/etc/ssl/server_cert.pem:ro
+      - ${SSL_KEY_PATH}:/etc/ssl/server_key.pem:ro
     networks:
       - haniot-network
     logging:
@@ -236,14 +244,14 @@ services:
       - DASHBOARD_HOST=https://${WEB_APP_HOSTNAME}
       - PORT_HTTP=80
       - PORT_HTTPS=443
-      - SSL_KEY_PATH=/etc/ssl/server.key
-      - SSL_CERT_PATH=/etc/ssl/server.cert
+      - SSL_CERT_PATH=/etc/ssl/server_cert.pem
+      - SSL_KEY_PATH=/etc/ssl/server_key.pem
       - API_GATEWAY_SERVICE=https://${API_GATEWAY_HOSTNAME}:${AG_PORT_HTTPS}
       - LS_SECRET_KEY=${LS_SECRET_KEY}
       - RECAPTCHA_KEY=${RECAPTCHA_KEY}
     volumes:
-      - ${SSL_KEY_PATH}:/etc/ssl/server.key:ro
-      - ${SSL_CERT_PATH}:/etc/ssl/server.cert:ro
+      - ${SSL_CERT_PATH}:/etc/ssl/server_cert.pem:ro
+      - ${SSL_KEY_PATH}:/etc/ssl/server_key.pem:ro
     networks:
       - haniot-network
     logging:
@@ -262,21 +270,24 @@ services:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=3000
       - PORT_HTTPS=3001
-      - SSL_KEY_PATH=/etc/ssl/server.key
-      - SSL_CERT_PATH=/etc/ssl/server.cert
-      - JWT_PRIVATE_KEY_PATH=/etc/.certs/jwt.key
-      - JWT_PUBLIC_KEY_PATH=/etc/.certs/jwt.pub
+      - SSL_CERT_PATH=/etc/ssl/server_cert.pem
+      - SSL_KEY_PATH=/etc/ssl/server_key.pem
+      - JWT_PRIVATE_KEY_PATH=/etc/ssl/jwt.key
+      - JWT_PUBLIC_KEY_PATH=/etc/ssl/jwt.key.pub
       - ISSUER=haniot
-      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@haniot.com}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - MONGODB_ENABLE_TLS=true
       - MONGODB_URI=mongodb://${ACCOUNT_DB_USER}:${ACCOUNT_DB_PASS}@mongo-account:27017/account?ssl=true
+      - MONGODB_CA_PATH=/etc/ssl/ca.pem
+      - MONGODB_KEY_PATH=/etc/ssl/mongodb.pem
       - RABBITMQ_URI=${ACCOUNT_RABBITMQ_URI}
+      - RABBITMQ_CA_PATH=/etc/ssl/ca.pem
+      - RABBITMQ_CERT_PATH=/etc/ssl/rabbitmq_cert.pem
+      - RABBITMQ_KEY_PATH=/etc/ssl/rabbitmq_key.pem
       - DASHBOARD_HOST=https://${WEB_APP_HOSTNAME}
     volumes:
-      - ${SSL_KEY_PATH}:/etc/ssl/server.key:ro
-      - ${SSL_CERT_PATH}:/etc/ssl/server.cert:ro
-      - ${JWT_PRIVATE_KEY_PATH}:/etc/.certs/jwt.key:ro
-      - ${JWT_PUBLIC_KEY_PATH}:/etc/.certs/jwt.pub:ro
+      - ./.certs/account/:/etc/ssl/:ro
     networks:
       - haniot-network
     logging:
@@ -295,13 +306,18 @@ services:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=4000
       - PORT_HTTPS=4001
-      - SSL_KEY_PATH=/etc/ssl/server.key
-      - SSL_CERT_PATH=/etc/ssl/server.cert
+      - SSL_CERT_PATH=/etc/ssl/server_cert.pem
+      - SSL_KEY_PATH=/etc/ssl/server_key.pem
+      - MONGODB_ENABLE_TLS=true
       - MONGODB_URI=mongodb://${MHEALTH_DB_USER}:${MHEALTH_DB_PASS}@mongo-mhealth:27017/mhealth?ssl=true
+      - MONGODB_CA_PATH=/etc/ssl/ca.pem
+      - MONGODB_KEY_PATH=/etc/ssl/mongodb.pem
       - RABBITMQ_URI=${MHEALTH_RABBITMQ_URI}
+      - RABBITMQ_CA_PATH=/etc/ssl/ca.pem
+      - RABBITMQ_CERT_PATH=/etc/ssl/rabbitmq_cert.pem
+      - RABBITMQ_KEY_PATH=/etc/ssl/rabbitmq_key.pem
     volumes:
-      - ${SSL_KEY_PATH}:/etc/ssl/server.key:ro
-      - ${SSL_CERT_PATH}:/etc/ssl/server.cert:ro
+      - ./.certs/mhealth/:/etc/ssl/:ro
     networks:
       - haniot-network
     logging:
@@ -320,13 +336,18 @@ services:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=5000
       - PORT_HTTPS=5001
-      - SSL_KEY_PATH=/etc/ssl/server.key
-      - SSL_CERT_PATH=/etc/ssl/server.cert
+      - SSL_CERT_PATH=/etc/ssl/server_cert.pem
+      - SSL_KEY_PATH=/etc/ssl/server_key.pem
+      - MONGODB_ENABLE_TLS=true
       - MONGODB_URI=mongodb://${EHR_DB_USER}:${EHR_DB_PASS}@mongo-ehr:27017/ehr?ssl=true
+      - MONGODB_CA_PATH=/etc/ssl/ca.pem
+      - MONGODB_KEY_PATH=/etc/ssl/mongodb.pem
       - RABBITMQ_URI=${EHR_RABBITMQ_URI}
+      - RABBITMQ_CA_PATH=/etc/ssl/ca.pem
+      - RABBITMQ_CERT_PATH=/etc/ssl/rabbitmq_cert.pem
+      - RABBITMQ_KEY_PATH=/etc/ssl/rabbitmq_key.pem
     volumes:
-      - ${SSL_KEY_PATH}:/etc/ssl/server.key:ro
-      - ${SSL_CERT_PATH}:/etc/ssl/server.cert:ro
+      - ./.certs/ehr/:/etc/ssl/:ro
     networks:
       - haniot-network
     logging:
@@ -345,18 +366,23 @@ services:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=6000
       - PORT_HTTPS=6001
-      - SSL_KEY_PATH=/etc/ssl/server.key
-      - SSL_CERT_PATH=/etc/ssl/server.cert
+      - SSL_CERT_PATH=/etc/ssl/server_cert.pem
+      - SSL_KEY_PATH=/etc/ssl/server_key.pem
+      - MONGODB_ENABLE_TLS=true
+      - MONGODB_URI=mongodb://${ANALYTICS_DB_USER}:${ANALYTICS_DB_PASS}@mongo-analytics:27017/analytics?ssl=true
+      - MONGODB_CA_PATH=/etc/ssl/ca.pem
+      - MONGODB_KEY_PATH=/etc/ssl/mongodb.pem
+      - RABBITMQ_URI=${ANALYTICS_RABBITMQ_URI}
+      - RABBITMQ_CA_PATH=/etc/ssl/ca.pem
+      - RABBITMQ_CERT_PATH=/etc/ssl/rabbitmq_cert.pem
+      - RABBITMQ_KEY_PATH=/etc/ssl/rabbitmq_key.pem
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - AWS_BUCKET_NAME=${AWS_BUCKET_NAME}
       - AWS_BUCKET_REGION=${AWS_BUCKET_REGION}
-      - MONGODB_URI=mongodb://${ANALYTICS_DB_USER}:${ANALYTICS_DB_PASS}@mongo-analytics:27017/analytics?ssl=true
-      - RABBITMQ_URI=${ANALYTICS_RABBITMQ_URI}
       - DASHBOARD_HOST=https://${WEB_APP_HOSTNAME}
     volumes:
-      - ${SSL_KEY_PATH}:/etc/ssl/server.key:ro
-      - ${SSL_CERT_PATH}:/etc/ssl/server.cert:ro
+      - ./.certs/analytics/:/etc/ssl/:ro
     networks:
       - haniot-network
     logging:
@@ -375,17 +401,22 @@ services:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=7000
       - PORT_HTTPS=7001
-      - SSL_KEY_PATH=/etc/ssl/server.key
-      - SSL_CERT_PATH=/etc/ssl/server.cert
+      - SSL_CERT_PATH=/etc/ssl/server_cert.pem
+      - SSL_KEY_PATH=/etc/ssl/server_key.pem
+      - MONGODB_ENABLE_TLS=true
+      - MONGODB_URI=mongodb://${NOTIFICATION_DB_USER}:${NOTIFICATION_DB_PASS}@mongo-notification:27017/notification?ssl=true
+      - MONGODB_CA_PATH=/etc/ssl/ca.pem
+      - MONGODB_KEY_PATH=/etc/ssl/mongodb.pem
+      - RABBITMQ_URI=${NOTIFICATION_RABBITMQ_URI}
+      - RABBITMQ_CA_PATH=/etc/ssl/ca.pem
+      - RABBITMQ_CERT_PATH=/etc/ssl/rabbitmq_cert.pem
+      - RABBITMQ_KEY_PATH=/etc/ssl/rabbitmq_key.pem
       - SMTP_HOST=${SMTP_HOST}
       - SMTP_PORT=${SMTP_PORT}
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASS=${SMTP_PASS}
-      - MONGODB_URI=mongodb://${NOTIFICATION_DB_USER}:${NOTIFICATION_DB_PASS}@mongo-notification:27017/notification?ssl=true
-      - RABBITMQ_URI=${NOTIFICATION_RABBITMQ_URI}
     volumes:
-      - ${SSL_KEY_PATH}:/etc/ssl/server.key:ro
-      - ${SSL_CERT_PATH}:/etc/ssl/server.cert:ro
+      - ./.certs/notification/:/etc/ssl/:ro
     networks:
       - haniot-network
     logging:
@@ -404,13 +435,23 @@ services:
       - NODE_ENV=${NODE_ENV}
       - PORT_HTTP=8000
       - PORT_HTTPS=8001
-      - SSL_KEY_PATH=/etc/.certs/server.key
-      - SSL_CERT_PATH=/etc/.certs/server.cert
-      - INFLUXDB_URI=http://influxdb-timeseries:8086/timeseries
+      - SSL_CERT_PATH=/etc/ssl/server_cert.pem
+      - SSL_KEY_PATH=/etc/ssl/server_key.pem
+      - INFLUXDB_HOST=influxdb-timeseries
+      - INFLUXDB_PORT=8086
+      - INFLUXDB_PROTOCOL=https
+      - INFLUXDB_NAME=timeseries
+      - INFLUXDB_USER=${INFLUXDB_USER}
+      - INFLUXDB_PASS=${INFLUXDB_PASS}
+      - INFLUXDB_CERT_PATH=/etc/ssl/influxdb_cert.pem
+      - INFLUXDB_KEY_PATH=/etc/ssl/influxdb_key.pem
+      - INFLUXDB_CA_PATH=/etc/ssl/ca.pem
       - RABBITMQ_URI=${TS_RABBITMQ_URI}
+      - RABBITMQ_CERT_PATH=/etc/ssl/rabbitmq_cert.pem
+      - RABBITMQ_KEY_PATH=/etc/ssl/rabbitmq_key.pem
+      - RABBITMQ_CA_PATH=/etc/ssl/ca.pem
     volumes:
-      - ${SSL_KEY_PATH}:/etc/.certs/server.key:ro
-      - ${SSL_CERT_PATH}:/etc/.certs/server.cert:ro
+      - ./.certs/timeseries/:/etc/ssl/:ro
     networks:
       - haniot-network
     logging:
@@ -430,17 +471,22 @@ services:
       - NODE_ENV=${NODE_ENV}
       - PORT_HTTP=9000
       - PORT_HTTPS=9001
-      - SSL_KEY_PATH=/etc/.certs/server.key
-      - SSL_CERT_PATH=/etc/.certs/server.cert
+      - SSL_CERT_PATH=/etc/ssl/server_cert.pem
+      - SSL_KEY_PATH=/etc/ssl/server_key.pem
+      - MONGODB_ENABLE_TLS=true
+      - MONGODB_URI=mongodb://${DS_DB_USER}:${DS_DB_PASS}@mongo-ds-agent:27017/ds-agent?ssl=true
+      - MONGODB_CA_PATH=/etc/ssl/ca.pem
+      - MONGODB_KEY_PATH=/etc/ssl/mongodb.pem
+      - RABBITMQ_URI=${DS_RABBITMQ_URI}
+      - RABBITMQ_CA_PATH=/etc/ssl/ca.pem
+      - RABBITMQ_CERT_PATH=/etc/ssl/rabbitmq_cert.pem
+      - RABBITMQ_KEY_PATH=/etc/ssl/rabbitmq_key.pem
+      - REDIS_URI=redis://redis-ds-agent:6379
       - FITBIT_CLIENT_ID=${FITBIT_CLIENT_ID}
       - FITBIT_CLIENT_SECRET=${FITBIT_CLIENT_SECRET}
       - EXPRESSION_AUTO_SYNC=${EXPRESSION_AUTO_SYNC}
-      - MONGODB_URI=mongodb://${DS_DB_USER}:${DS_DB_PASS}@mongo-ds-agent:27017/ds-agent?ssl=true
-      - REDIS_URI=redis://redis-ds-agent:6379
-      - RABBITMQ_URI=${DS_RABBITMQ_URI}
     volumes:
-      - ${SSL_KEY_PATH}:/etc/.certs/server.key:ro
-      - ${SSL_CERT_PATH}:/etc/.certs/server.cert:ro
+      - ./.certs/ds-agent/:/etc/ssl/:ro
     networks:
       - haniot-network
     logging:
@@ -449,17 +495,17 @@ services:
         max-size: 100m
 
   rabbitmq: # Container for RabbitMQ
-    image: rabbitmq:3.8.3
+    image: rabbitmq:3-management-alpine
     container_name: haniot-rabbitmq
     restart: always
     ports:
       - 15672:15672 # AMQP Management UI
       - 5672:5672 # AMQP Service
     volumes:
-      - ./config/rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
-      - ./config/rabbitmq/rabbit_config.json:/etc/rabbitmq/rabbit_config.json:ro
-    environment:
-      - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbitmq_management load_definitions "/etc/rabbitmq/rabbit_config.json"
+      - rabbitmq-data:/var/lib/rabbitmq
+      - ./.certs/rabbitmq/:/etc/ssl/:ro
+      - ./config/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./config/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
     networks:
       - haniot-network
     logging:
@@ -486,6 +532,8 @@ volumes:
     name: haniot-mongo-ds-agent
   influxdb-timeseries-data:
     name: haniot-influxdb-timeseries
+  rabbitmq-data:
+    name: haniot-rabbitmq
 
 networks:
   haniot-network:
