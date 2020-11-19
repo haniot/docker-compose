@@ -199,6 +199,7 @@ services:
     depends_on:
       - redis-ag
     environment:
+      - TZ=America/Sao_Paulo
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=${AG_PORT_HTTP}
       - PORT_HTTPS=${AG_PORT_HTTPS}
@@ -240,6 +241,7 @@ services:
     depends_on:
       - api-gateway
     environment:
+      - TZ=America/Sao_Paulo
       - NODE_ENV=${NODE_ENV:-development}
       - DASHBOARD_HOST=https://${WEB_APP_HOSTNAME}
       - PORT_HTTP=80
@@ -267,6 +269,7 @@ services:
       - mongo-account
       - rabbitmq
     environment:
+      - TZ=America/Sao_Paulo
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=3000
       - PORT_HTTPS=3001
@@ -303,6 +306,7 @@ services:
       - mongo-mhealth
       - rabbitmq
     environment:
+      - TZ=America/Sao_Paulo
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=4000
       - PORT_HTTPS=4001
@@ -333,6 +337,7 @@ services:
       - mongo-ehr
       - rabbitmq
     environment:
+      - TZ=America/Sao_Paulo
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=5000
       - PORT_HTTPS=5001
@@ -363,6 +368,7 @@ services:
       - mongo-analytics
       - rabbitmq
     environment:
+      - TZ=America/Sao_Paulo
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=6000
       - PORT_HTTPS=6001
@@ -398,6 +404,7 @@ services:
       - mongo-notification
       - rabbitmq
     environment:
+      - TZ=America/Sao_Paulo
       - NODE_ENV=${NODE_ENV:-development}
       - PORT_HTTP=7000
       - PORT_HTTPS=7001
@@ -432,6 +439,7 @@ services:
       - influxdb-timeseries
       - rabbitmq
     environment:
+      - TZ=America/Sao_Paulo
       - NODE_ENV=${NODE_ENV}
       - PORT_HTTP=8000
       - PORT_HTTPS=8001
@@ -468,6 +476,7 @@ services:
       - redis-ds-agent
       - rabbitmq
     environment:
+      - TZ=America/Sao_Paulo
       - NODE_ENV=${NODE_ENV}
       - PORT_HTTP=9000
       - PORT_HTTPS=9001
