@@ -423,6 +423,7 @@ services:
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASS=${SMTP_PASS}
       - SENDER_NAME=HANIoT
+      - ORIGIN_EMAIL=${ORIGIN_EMAIL}
     volumes:
       - ./.certs/notification/:/etc/ssl/:ro
     networks:
